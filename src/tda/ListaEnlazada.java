@@ -30,7 +30,7 @@ public class ListaEnlazada<T> implements IListaEnlazada<T>{
     public boolean buscar(T dato) {
         Nodo<T> aux = cabeza;
         while (aux != null) {
-            if (aux.dato.equals(dato)) return true;
+            if (aux.dato == dato) return true;
             aux = aux.siguiente;
         }
         return false;
@@ -38,7 +38,7 @@ public class ListaEnlazada<T> implements IListaEnlazada<T>{
 
     public void eliminar(T dato) {
         if (cabeza == null) return;
-        if (cabeza.dato.equals(dato)) {
+        if (cabeza.dato == dato) {
             cabeza = cabeza.siguiente;
             return;
         }
