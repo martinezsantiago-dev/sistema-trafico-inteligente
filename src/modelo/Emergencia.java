@@ -1,7 +1,7 @@
 package modelo;
 
 public class Emergencia {
-    public int id;
+    public String id;
     public int gravedad;
     public String ubicacion;
     public long timestamp;
