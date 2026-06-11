@@ -5,9 +5,7 @@ public interface IPilaHistorial<T> {
     T desapilar();
     T tope();
 
-    boolean estaLlena();
     boolean estaVacia();
 
     int tamanio();
-    void mostrar();
 }

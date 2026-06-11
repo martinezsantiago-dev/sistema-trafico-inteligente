@@ -4,63 +4,71 @@ import tda.interfaces.IPilaHistorial;
 
 public class PilaHistorial<T> implements IPilaHistorial<T> {
 
-    private int max;
-    private int tope;
-    private T[] datos;
+    private Nodo<T> tope;
+    private int tamanio;
 
-    @SuppressWarnings("unchecked")
-    public PilaHistorial(int max) {
-        this.max = max;
-        this.tope = -1;
-        this.datos = (T[]) new Object[max];
+    public PilaHistorial() {
+        this.tope = null;
+        this.tamanio = 0;
     }
 
     @Override
     public void apilar(T dato) {
-        if (!estaLlena()) {
-            datos[++tope] = dato;
-        } else {
-            System.out.println("La pila está llena");
-        }
+        Nodo<T> nuevo = new Nodo<>(dato);
+
+        nuevo.siguiente = tope;
+        tope = nuevo;
+
+        tamanio++;
     }
 
     @Override
     public T desapilar() {
-        if (!estaVacia()) {
-            T eliminado = datos[tope];
-            datos[tope--] = null;
-            return eliminado;
+        if (estaVacia()) {
+            return null;
         }
-        return null;
+
+        T datoEliminado = tope.dato;
+        tope = tope.siguiente;
+
+        tamanio--;
+
+        return datoEliminado;
     }
 
     @Override
     public T tope() {
-        if (!estaVacia()) {
-            return datos[tope];
+        if (estaVacia()) {
+            return null;
         }
-        return null;
-    }
 
-    @Override
-    public boolean estaLlena() {
-        return tope == max - 1;
+        return tope.dato;
     }
 
     @Override
     public boolean estaVacia() {
-        return tope == -1;
+        return tope == null;
     }
 
     @Override
     public int tamanio() {
-        return tope + 1;
+        return tamanio;
     }
-
+    /* // no es necesario por ahora.
     @Override
     public void mostrar() {
-        for (int i = tope; i >= 0; i--) {
-            System.out.println(datos[i]);
+        if (estaVacia()) {
+            System.out.println("La pila está vacía");
+            return;
         }
-    }
+
+        Nodo<T> aux = tope;
+
+        while (aux != null) {
+            System.out.println(aux.dato);
+            aux = aux.siguiente;
+        }
+    } /*
+
+     */
 }
