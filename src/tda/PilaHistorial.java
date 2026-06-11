@@ -54,7 +54,7 @@ public class PilaHistorial<T> implements IPilaHistorial<T> {
     public int tamanio() {
         return tamanio;
     }
-    /* // no es necesario por ahora.
+
     @Override
     public void mostrar() {
         if (estaVacia()) {
@@ -68,7 +68,7 @@ public class PilaHistorial<T> implements IPilaHistorial<T> {
             System.out.println(aux.dato);
             aux = aux.siguiente;
         }
-    } /*
+    }
 
-     */
+
 }

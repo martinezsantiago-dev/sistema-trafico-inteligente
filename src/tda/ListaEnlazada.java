@@ -72,4 +72,6 @@ public class ListaEnlazada<T> implements IListaEnlazada<T>{
     public boolean estaVacia() {
         return cabeza == null;
     }
+
+    // falta agregar metodo tamanio
 }

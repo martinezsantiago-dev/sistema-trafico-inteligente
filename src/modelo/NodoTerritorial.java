@@ -36,12 +36,33 @@ public class NodoTerritorial {
         return cantidadIncidentes;
     }
 
-    public ListaEnlazada<NodoTerritorial> getHijos() {
+    public ListaEnlazada<NodoTerritorial> getHijos() { // esto permite que cada nodo pueda tener muchos hijos
         return hijos;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
     @Override
     public String toString() {
         return tipo + ": " + nombre + " | Incidentes: " + cantidadIncidentes;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof NodoTerritorial)) return false;
+
+        NodoTerritorial otro = (NodoTerritorial) obj;
+
+        if (nombre == null && otro.nombre == null) return true;
+        if (nombre == null || otro.nombre == null) return false;
+
+        return nombre.equals(otro.nombre);
     }
 }
