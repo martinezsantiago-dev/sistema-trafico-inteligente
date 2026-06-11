@@ -8,6 +8,16 @@ public class ListaEnlazada<T> implements IListaEnlazada<T>{
         cabeza = null;
     }
 
+    private boolean sonIguales(T a, T b) { // lo ponemos en private ya que solo lo usara este metodo.
+        if (a == null && b == null) {
+            return true;
+        }
+        if (a == null || b == null) {
+            return false;
+        }           // para reemplazar a .equals q no trabaja con posibles valores null.
+        return a.equals(b);
+    }
+
     public void insertarInicio(T dato) {
         Nodo<T> nuevo = new Nodo<>(dato);
         nuevo.siguiente = cabeza;
@@ -30,21 +40,24 @@ public class ListaEnlazada<T> implements IListaEnlazada<T>{
     public boolean buscar(T dato) {
         Nodo<T> aux = cabeza;
         while (aux != null) {
-            if (aux.dato == dato) return true;
+            if (sonIguales(aux.dato, dato)) return true;
             aux = aux.siguiente;
         }
+
         return false;
     }
 
     public void eliminar(T dato) {
         if (cabeza == null) return;
-        if (cabeza.dato == dato) {
+
+        if (sonIguales(cabeza.dato, dato)) {
             cabeza = cabeza.siguiente;
             return;
         }
         Nodo<T> actual = cabeza;
+
         while (actual.siguiente != null) {
-            if (actual.siguiente.dato.equals(dato)) {
+            if (sonIguales(actual.siguiente.dato, dato)) {
                 actual.siguiente = actual.siguiente.siguiente;
                 return;
             }
