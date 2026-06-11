@@ -8,4 +8,5 @@ public interface IPilaHistorial<T> {
     boolean estaVacia();
 
     int tamanio();
+    void mostrar();
 }
