@@ -73,21 +73,5 @@ public class ListaEnlazada<T> implements IListaEnlazada<T>{
         return cabeza == null;
     }
 
-    public int tamanio() {
-        int contador = 0;
-        Nodo<T> aux = cabeza;
-        while (aux != null) {
-            contador++;
-            aux = aux.siguiente;
-        }
-        return contador;
-    }
-
-    public void mostrar() {
-        Nodo<T> aux = cabeza;
-        while (aux != null) {
-            System.out.println(aux.dato);
-            aux = aux.siguiente;
-        }
-    }
+    // falta agregar metodo tamanio
 }

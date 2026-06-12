@@ -5,11 +5,11 @@ public class Camara extends Dispositivo {
     private String tipo;
     private int vehiculosDetectados;
     private double velocidadPromedio;
-    private String interseccion;
+   //  private String interseccion;
 
     public Camara(String id, Direccion ubicacion, String interseccion, String tipo) {
         super(id, ubicacion);
-        this.interseccion = interseccion;
+        // this.interseccion = interseccion;
         this.tipo = tipo;
         this.vehiculosDetectados = 0;
         this.velocidadPromedio = 0.0;
@@ -39,6 +39,7 @@ public class Camara extends Dispositivo {
         this.velocidadPromedio = velocidadPromedio;
     }
 
+    /*
     public String getInterseccion() {
         return interseccion;
     }
@@ -47,11 +48,14 @@ public class Camara extends Dispositivo {
         this.interseccion = interseccion;
     }
 
+    /*
+     */
+
     @Override
     public String toString() {
         return "Camara " + getId() +
                 " | Tipo: " + tipo +
-                " | Interseccion: " + interseccion +
+                // " | Interseccion: " + interseccion +
                 " | Vehiculos detectados: " + vehiculosDetectados +
                 " | Velocidad promedio: " + velocidadPromedio + " km/h" +
                 " | Activo: " + isActivo();

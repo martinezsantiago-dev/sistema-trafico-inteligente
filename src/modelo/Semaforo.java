@@ -8,12 +8,13 @@ public class Semaforo extends Dispositivo {
     private int tiempoVerde;
     private int tiempoAmarillo;
     private int tiempoRojo;
-    private String interseccion;
+    // private String interseccion; No sera necesario implemnentar interseccion en los objetos Semaforo y Camara,
+    // ya que heredaran la variable interseccion de Dispositivos.
 
     public Semaforo(String id, Direccion ubicacion, String interseccion,
                     int tiempoVerde, int tiempoAmarillo, int tiempoRojo) {
         super(id, ubicacion);
-        this.interseccion = interseccion;
+        // this.interseccion = interseccion;
         this.tiempoVerde = tiempoVerde;
         this.tiempoAmarillo = tiempoAmarillo;
         this.tiempoRojo = tiempoRojo;
@@ -52,18 +53,25 @@ public class Semaforo extends Dispositivo {
         this.tiempoRojo = tiempoRojo;
     }
 
+    /*
+
     public String getInterseccion() {
         return interseccion;
     }
+
+
 
     public void setInterseccion(String interseccion) {
         this.interseccion = interseccion;
     }
 
+    /*
+     */
+
     @Override
     public String toString() {
         return "Semaforo " + getId() +
-                " | Interseccion: " + interseccion +
+                // " | Interseccion: " + interseccion +
                 " | Estado: " + estado +
                 " | Verde: " + tiempoVerde + "s" +
                 " | Amarillo: " + tiempoAmarillo + "s" +

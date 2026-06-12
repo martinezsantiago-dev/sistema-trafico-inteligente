@@ -5,6 +5,7 @@ public class Dispositivo {
     private String id;
     private Direccion ubicacion;
     private boolean activo;
+    private String interseccion;
 
     public Dispositivo(String id, Direccion ubicacion) {
         this.id = id;
@@ -15,6 +16,11 @@ public class Dispositivo {
     public String getId() {
         return id;
     }
+
+    public String getInterseccion() {
+        return interseccion;
+    }
+
 
     public void setId(String id) {
         this.id = id;
