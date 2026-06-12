@@ -107,6 +107,39 @@ public class GrafoVial {
         return true;
     }
 
+    public boolean eliminarInterseccion(String id) {
+        Interseccion interseccion = buscarInterseccion(id);
+        if (interseccion == null) return false;
+
+        intersecciones.eliminar(interseccion);
+
+        Nodo<Interseccion> aux = intersecciones.getCabeza();
+        while (aux != null) {
+            Calle calleApuntando = buscarCalle(aux.dato.getId(), id);
+            if (calleApuntando != null) {
+                aux.dato.getCallesAdyacentes().eliminar(calleApuntando);
+            }
+            aux = aux.siguiente;
+        }
+
+        return true;
+    }
+
+    public boolean eliminarCalle(String origenId, String destinoId) {
+        Calle calle = buscarCalle(origenId, destinoId);
+        if (calle == null) return false;
+
+        Interseccion origen = buscarInterseccion(origenId);
+        origen.getCallesAdyacentes().eliminar(calle);
+        return true;
+    }
+
+    public boolean eliminarCalleDobleMano(String origenId, String destinoId) {
+        boolean ida = eliminarCalle(origenId, destinoId);
+        boolean vuelta = eliminarCalle(destinoId, origenId);
+        return ida || vuelta;
+    }
+
     public void mostrarIntersecciones() {
         if (intersecciones.estaVacia()) {
             System.out.println("No hay intersecciones cargadas");

@@ -1,6 +1,6 @@
 package modelo;
 
-public class Emergencia {
+public class    Emergencia {
 
     private String id;
     private int gravedad; // 1 a 5. 5 es la más grave.
