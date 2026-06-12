@@ -7,7 +7,7 @@ public class Dispositivo {
     private boolean activo;
     private String interseccion;
 
-    public Dispositivo(String id, Direccion ubicacion) {
+    public Dispositivo(String id, Direccion ubicacion, String interseccion) {
         this.id = id;
         this.ubicacion = ubicacion;
         this.activo = true;
@@ -43,7 +43,7 @@ public class Dispositivo {
         this.activo = activo;
     }
 
-    public void setInterseccion() {
+    public void setInterseccion(String interseccion) {
         this.interseccion = interseccion;
     }
 

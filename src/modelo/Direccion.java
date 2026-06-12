@@ -4,7 +4,7 @@ public class Direccion {
     private String calle;
     private int altura;
 
-    public Direccion(String calle, int altura, String calleDesde, String calleHasta) {
+    public Direccion(String calle, int altura) {
         this.calle = calle;
         this.altura = altura;
     }

@@ -8,7 +8,7 @@ public class Camara extends Dispositivo {
    //  private String interseccion;
 
     public Camara(String id, Direccion ubicacion, String interseccion, String tipo) {
-        super(id, ubicacion);
+        super(id, ubicacion, interseccion);
         // this.interseccion = interseccion;
         this.tipo = tipo;
         this.vehiculosDetectados = 0;

@@ -13,7 +13,7 @@ public class Semaforo extends Dispositivo {
 
     public Semaforo(String id, Direccion ubicacion, String interseccion,
                     int tiempoVerde, int tiempoAmarillo, int tiempoRojo) {
-        super(id, ubicacion);
+        super(id, ubicacion, interseccion);
         // this.interseccion = interseccion;
         this.tiempoVerde = tiempoVerde;
         this.tiempoAmarillo = tiempoAmarillo;
