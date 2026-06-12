@@ -1,6 +1,7 @@
 package tda.interfaces;
 
 import modelo.Dispositivo;
+import tda.ListaEnlazada;
 
 public interface IDiccionarioDispositivos {
 
@@ -11,6 +12,14 @@ public interface IDiccionarioDispositivos {
     boolean contieneClave(String clave);
 
     boolean modificarActivo(String clave, boolean activo);
+
+    boolean eliminar(String clave);
+
+    ListaEnlazada<Dispositivo> buscarPorInterseccion(String interseccion);
+
+    boolean estaVacio();
+
+    int tamanio();
 
     void mostrar();
 }

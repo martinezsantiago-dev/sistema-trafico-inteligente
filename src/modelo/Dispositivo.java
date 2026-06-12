@@ -11,6 +11,7 @@ public class Dispositivo {
         this.id = id;
         this.ubicacion = ubicacion;
         this.activo = true;
+        this.interseccion = interseccion;
     }
 
     public String getId() {
@@ -40,6 +41,10 @@ public class Dispositivo {
 
     public void setActivo(boolean activo) {
         this.activo = activo;
+    }
+
+    public void setInterseccion() {
+        this.interseccion = interseccion;
     }
 
     @Override

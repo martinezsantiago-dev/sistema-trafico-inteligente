@@ -1,61 +1,48 @@
 package modelo;
 
+import tda.ColaFIFO;
 import tda.ListaEnlazada;
 
 public class Interseccion {
 
     private String id;
     private String nombre;
-    private ListaEnlazada<Semaforo> semaforos;
-    private ListaEnlazada<Camara> camaras;
-    private ListaEnlazada<Vehiculo> vehiculosEsperando;
+    private ListaEnlazada<Calle> callesAdyacentes;
+    private ColaFIFO<Vehiculo> colaVehiculos;
 
     public Interseccion(String id, String nombre) {
         this.id = id;
         this.nombre = nombre;
-        this.semaforos = new ListaEnlazada<>();
-        this.camaras = new ListaEnlazada<>();
-        this.vehiculosEsperando = new ListaEnlazada<>();
+        this.callesAdyacentes = new ListaEnlazada<>();
+        this.colaVehiculos = new ColaFIFO<>();
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public String getNombre() {
         return nombre;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public ListaEnlazada<Calle> getCallesAdyacentes() {
+        return callesAdyacentes;
     }
 
-    public ListaEnlazada<Semaforo> getSemaforos() {
-        return semaforos;
+    public void agregarCalle(Calle calle) {
+        callesAdyacentes.insertarFinal(calle);
     }
 
-    public void setSemaforos(ListaEnlazada<Semaforo> semaforos) {
-        this.semaforos = semaforos;
+    public void registrarVehiculo(Vehiculo vehiculo) {
+        colaVehiculos.encolar(vehiculo);
     }
 
-    public ListaEnlazada<Camara> getCamaras() {
-        return camaras;
+    public Vehiculo liberarVehiculo() {
+        return colaVehiculos.desencolar();
     }
 
-    public void setCamaras(ListaEnlazada<Camara> camaras) {
-        this.camaras = camaras;
-    }
-
-    public ListaEnlazada<Vehiculo> getVehiculosEsperando() {
-        return vehiculosEsperando;
-    }
-
-    public void setVehiculosEsperando(ListaEnlazada<Vehiculo> vehiculosEsperando) {
-        this.vehiculosEsperando = vehiculosEsperando;
+    public void mostrarVehiculos() {
+        colaVehiculos.mostrar();
     }
 
     @Override
