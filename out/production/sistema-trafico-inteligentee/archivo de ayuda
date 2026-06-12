@@ -1,4 +1,10 @@
-Ejemplo arbol
+Haz un arbol n ario para las distintas zonas territoriales.Respeta la jerarquia
+Zona / Barrio / Manzana. Ten en cuenta que cada nodo sera un objeto interseccion,
+y cada arista sera un objeto Calle. Ten en cuenta la compatibilidad con esos
+objetos a la hora de hacer este TDA. Ademas, respeta el codigo que te paso a continuacion:
+
+Modelo de arbol n ario para pasarle a claude.
+Aclarar antes que debe hacer una interfaz y el nodo, de ser necesraio.
 
 package tda;
 
