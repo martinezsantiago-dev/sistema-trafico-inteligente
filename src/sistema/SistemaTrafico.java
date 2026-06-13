@@ -188,4 +188,8 @@ public class SistemaTrafico {
     public void mostrarTerritorio() {
         arbolTerritorial.mostrar();
     }
+
+    public void mostrarIntersecciones() {
+        GrafoVial.mostrarIntersecciones();
+    }
 }
