@@ -190,6 +190,6 @@ public class SistemaTrafico {
     }
 
     public void mostrarIntersecciones() {
-        GrafoVial.mostrarIntersecciones();
+        grafoVial.mostrarIntersecciones();
     }
 }

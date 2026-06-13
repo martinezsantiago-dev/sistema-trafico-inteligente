@@ -96,6 +96,7 @@ public class Main {
     // ===== ACCIONES =====
 
     private static void reportarEmergencia() {
+
         String id = leerTexto("ID de la emergencia: ");
         int gravedad = leerGravedad();
         String interseccionId = leerTexto("ID de intersección afectada: ");
@@ -105,6 +106,10 @@ public class Main {
     }
 
     private static void calcularRuta(String tipo) {
+        System.out.println("\nIntersecciones disponibles:");
+        sistema.mostrarIntersecciones();
+
+
         String origen = leerTexto("ID intersección origen: ");
         String destino = leerTexto("ID intersección destino: ");
 
