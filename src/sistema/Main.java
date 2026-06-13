@@ -82,7 +82,7 @@ public class Main {
                 case 2: gestionarDispositivo(true); break;
                 case 3: gestionarDispositivo(false); break;
                 case 4: cambiarEstadoSemaforo(); break;
-                case 5: sistema.atenderEmergencia(); break;
+                case 5: atenderEmergencia();break;
                 case 6: sistema.mostrarEmergencias(); break;
                 case 7: sistema.deshacerUltimoCambio(); break;
                 case 8: sistema.mostrarHistorial(); break;
@@ -96,6 +96,8 @@ public class Main {
     // ===== ACCIONES =====
 
     private static void reportarEmergencia() {
+
+        sistema.mostrarIntersecciones();
 
         String id = leerTexto("ID de la emergencia: ");
         int gravedad = leerGravedad();
@@ -217,4 +219,18 @@ public class Main {
         }
         return gravedad;
     }
+
+    private static void atenderEmergencia() {
+        System.out.println("\nEmergencias pendientes:");
+        sistema.mostrarEmergencias();
+
+        String confirmar = leerTexto("¿Atender la emergencia más prioritaria? (s/n): ");
+
+        if (confirmar.equalsIgnoreCase("s")) {
+            sistema.atenderEmergencia();
+        } else {
+            System.out.println("Operación cancelada.");
+        }
+    }
+
 }

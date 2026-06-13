@@ -131,6 +131,7 @@ public class SistemaTrafico {
         return e;
     }
 
+
     public void mostrarEmergencias() {
         colaEmergencias.mostrar();
     }
