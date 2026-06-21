@@ -95,11 +95,19 @@ public class SistemaTrafico {
     }
 
     public boolean bloquearCalle(String origenId, String destinoId) {
-        return grafoVial.bloquearCalleDobleMano(origenId, destinoId);
+        boolean resultado = grafoVial.bloquearCalleDobleMano(origenId, destinoId);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle", origenId + "->" + destinoId, "bloqueada", "false", "true"));
+        }
+        return resultado;
     }
 
     public boolean desbloquearCalle(String origenId, String destinoId) {
-        return grafoVial.desbloquearCalleDobleMano(origenId, destinoId);
+        boolean resultado = grafoVial.desbloquearCalleDobleMano(origenId, destinoId);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle", origenId + "->" + destinoId, "bloqueada", "true", "false"));
+        }
+        return resultado;
     }
 
     public void mostrarRedVial() {
@@ -157,6 +165,22 @@ public class SistemaTrafico {
             if (d instanceof Semaforo) {
                 ((Semaforo) d).setEstado(Semaforo.Estado.valueOf(cambio.getValorAnterior()));
             }
+        } else if (cambio.getAtributo().equals("bloqueada")) {
+            String[] partes = cambio.getIdEntidad().split("->");
+            if (partes.length == 2) {
+                boolean estabaBloqueda = Boolean.parseBoolean(cambio.getValorAnterior());
+                if (estabaBloqueda) {
+                    grafoVial.bloquearCalleDobleMano(partes[0], partes[1]);
+                } else {
+                    grafoVial.desbloquearCalleDobleMano(partes[0], partes[1]);
+                }
+            }
+        } else if (cambio.getAtributo().equals("demora")) {
+            String[] partes = cambio.getIdEntidad().split("->");
+            if (partes.length == 2) {
+                int demoraAnterior = Integer.parseInt(cambio.getValorAnterior());
+                grafoVial.registrarDemoraEnCalleDobleMano(partes[0], partes[1], demoraAnterior);
+            }
         }
     }
 
@@ -192,5 +216,58 @@ public class SistemaTrafico {
 
     public void mostrarIntersecciones() {
         grafoVial.mostrarIntersecciones();
+    }
+
+    // ===== CONSULTAS =====
+
+    public boolean existeInterseccion(String id) {
+        return grafoVial.buscarInterseccion(id) != null;
+    }
+
+    public boolean existeDispositivo(String id) {
+        return dispositivos.contieneClave(id);
+    }
+
+    public boolean hayEmergencias() {
+        return !colaEmergencias.estaVacia();
+    }
+
+    public void mostrarProximaEmergencia() {
+        Emergencia e = colaEmergencias.frente();
+        if (e == null) {
+            System.out.println("No hay emergencias pendientes.");
+        } else {
+            System.out.println(e);
+        }
+    }
+
+    // ===== RUTAS POR DIRECCION =====
+
+    public boolean calcularRutaMenosTramosPorDirecciones(Direccion origen, Direccion destino) {
+        return grafoVial.mostrarRutaMenosTramosPorDirecciones(origen, destino);
+    }
+
+    public boolean calcularRutaMasRapidaPorDirecciones(Direccion origen, Direccion destino) {
+        return grafoVial.mostrarRutaMasRapidaPorDirecciones(origen, destino);
+    }
+
+    public boolean calcularRutaMasCortaPorDirecciones(Direccion origen, Direccion destino) {
+        return grafoVial.mostrarRutaMasCortaPorDirecciones(origen, destino);
+    }
+
+    // ===== GESTION DE CALLES =====
+
+    public boolean registrarDemoraEnCalle(String origenId, String destinoId, int demoraMinutos) {
+        int anterior = grafoVial.obtenerDemoraEnCalle(origenId, destinoId);
+        boolean resultado = grafoVial.registrarDemoraEnCalleDobleMano(origenId, destinoId, demoraMinutos);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle", origenId + "->" + destinoId,
+                    "demora", String.valueOf(anterior), String.valueOf(demoraMinutos)));
+        }
+        return resultado;
+    }
+
+    public void mostrarCallesDetalladas() {
+        grafoVial.mostrarCallesDetalladas();
     }
 }

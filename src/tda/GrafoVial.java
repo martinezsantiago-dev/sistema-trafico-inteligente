@@ -9,7 +9,7 @@ public class GrafoVial {
 
     private ListaEnlazada<Interseccion> intersecciones;
 
-    private static final int INFINITO = 999999999;
+    private static final int SIN_RUTA = 999999999;
 
     public GrafoVial() {
         this.intersecciones = new ListaEnlazada<>();
@@ -408,6 +408,11 @@ public class GrafoVial {
         interseccion.mostrarVehiculos();
     }
 
+    public int obtenerDemoraEnCalle(String origenId, String destinoId) {
+        Calle calle = buscarCalle(origenId, destinoId);
+        return calle == null ? 0 : calle.getDemoraExtraMinutos();
+    }
+
     private Calle buscarCalle(String origenId, String destinoId) {
         Interseccion origen = buscarInterseccion(origenId);
 
@@ -540,7 +545,7 @@ public class GrafoVial {
         String[] anteriores = new String[cantidad];
 
         for (int i = 0; i < cantidad; i++) {
-            costos[i] = INFINITO;
+            costos[i] = SIN_RUTA;
             visitados[i] = false;
             anteriores[i] = null;
         }
@@ -571,7 +576,7 @@ public class GrafoVial {
                         if (indiceVecino != -1 && !visitados[indiceVecino]) {
                             int peso = obtenerPeso(calle, criterio);
 
-                            if (costos[actualIndice] != INFINITO &&
+                            if (costos[actualIndice] != SIN_RUTA &&
                                     costos[actualIndice] + peso < costos[indiceVecino]) {
 
                                 costos[indiceVecino] = costos[actualIndice] + peso;
@@ -585,7 +590,7 @@ public class GrafoVial {
             }
         }
 
-        if (costos[indiceDestino] == INFINITO) {
+        if (costos[indiceDestino] == SIN_RUTA) {
             if (mostrar) {
                 System.out.println("No existe ruta disponible entre " + origenId + " y " + destinoId);
             }
@@ -652,7 +657,7 @@ public class GrafoVial {
     }
 
     private int obtenerIndiceMenorCostoNoVisitado(int[] costos, boolean[] visitados) {
-        int menorCosto = INFINITO;
+        int menorCosto = SIN_RUTA;
         int indiceMenor = -1;
 
         for (int i = 0; i < costos.length; i++) {

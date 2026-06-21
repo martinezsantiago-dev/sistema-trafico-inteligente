@@ -1,0 +1,64 @@
+===============================================
+   GUÍA DE DATOS PRECARGADOS - SISTEMA DE TRÁFICO
+===============================================
+
+---- INTERSECCIONES ----
+ID    | Nombre
+------|----------------------------------
+I1    | Santa Fe y Coronel Diaz
+I2    | Santa Fe y Scalabrini Ortiz
+I3    | Cabildo y Juramento
+I4    | Scalabrini Ortiz y Cordoba
+
+---- CALLES ----
+Origen | Destino | Nombre             | Metros | Minutos | Doble mano
+-------|---------|---------------------|--------|---------|----------
+I1     | I2      | Santa Fe            | 400    | 3       | Si
+I2     | I1      | Santa Fe            | 400    | 3       | Si (vuelta)
+I2     | I4      | Scalabrini Ortiz    | 350    | 4       | Si
+I4     | I2      | Scalabrini Ortiz    | 350    | 4       | Si (vuelta)
+I1     | I4      | Coronel Diaz        | 600    | 7       | Si
+I4     | I1      | Coronel Diaz        | 600    | 7       | Si (vuelta)
+I3     | I2      | Juramento           | 500    | 5       | No (solo ida)
+
+---- RUTAS POSIBLES (ejemplos) ----
+Origen | Destino | Ruta sugerida
+-------|---------|------------------------------------
+I1     | I4      | I1 -> I4 (directo, Coronel Diaz)
+I1     | I2      | I1 -> I2 (directo, Santa Fe)
+I2     | I1      | I2 -> I1 (directo, Santa Fe)
+I3     | I4      | I3 -> I2 -> I4
+I3     | I1      | I3 -> I2 -> I1
+I4     | I3      | No existe ruta (Juramento es solo ida I3->I2)
+
+---- SEMÁFOROS ----
+ID  | Intersección | Verde | Amarillo | Rojo
+----|-------------|-------|----------|-----
+S1  | I1          | 30s   | 5s       | 25s
+S2  | I2          | 25s   | 5s       | 30s
+S3  | I3          | 20s   | 5s       | 35s
+
+---- CÁMARAS ----
+ID  | Intersección | Tipo
+----|-------------|----------
+C1  | I2          | velocidad
+C2  | I3          | flujo
+
+---- TERRITORIO ----
+Buenos Aires (Ciudad)
+  └── Palermo (Zona)
+        ├── Palermo Soho (Barrio)
+        │     ├── Manzana 1
+        │     └── Manzana 2
+        └── Palermo Hollywood (Barrio)
+  └── Belgrano (Zona)
+        └── Belgrano C (Barrio)
+              └── Manzana 3
+
+---- NOTAS PARA EL DEMO ----
+- Para calcular rutas usar los IDs: I1, I2, I3, I4
+- Para gestionar dispositivos usar los IDs: S1, S2, S3, C1, C2
+- La gravedad de emergencia va de 1 (leve) a 5 (critica)
+- Juramento (I3->I2) es de un solo sentido: no hay ruta de vuelta por esa calle
+- Deshacer cambio revierte el ultimo cambio hecho sobre dispositivos (estado o activacion)
+===============================================
