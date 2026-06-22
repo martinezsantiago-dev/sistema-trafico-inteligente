@@ -39,25 +39,10 @@ public class Camara extends Dispositivo {
         this.velocidadPromedio = velocidadPromedio;
     }
 
-    /*
-    public String getInterseccion() {
-        return interseccion;
-    }
-
-    public void setInterseccion(String interseccion) {
-        this.interseccion = interseccion;
-    }
-
-    /*
-     */
-
     @Override
     public String toString() {
-        return "Camara " + getId() +
-                " | Tipo: " + tipo +
-                // " | Interseccion: " + interseccion +
-                " | Vehiculos detectados: " + vehiculosDetectados +
-                " | Velocidad promedio: " + velocidadPromedio + " km/h" +
-                " | Activo: " + isActivo();
+        return "[Cámara " + getId() + "]" +
+                " Tipo: " + tipo +
+                " | " + (isActivo() ? "ACTIVA" : "INACTIVA");
     }
 }

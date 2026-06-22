@@ -21,32 +21,26 @@ public class DiccionarioDispositivos implements IDiccionarioDispositivos {
 
     private int hash(String clave) {
         int suma = 0;
-
-        for (int i = 0; i < clave.length(); i++) {
-            suma += clave.charAt(i);
+        String claveNormal = clave.toUpperCase(); // ← así "s3" y "S3" dan el mismo hash
+        for (int i = 0; i < claveNormal.length(); i++) {
+            suma += claveNormal.charAt(i);
         }
-
         return suma % capacidad;
     }
 
     private EntradaDiccionario buscarEntrada(String clave) {
-        if (clave == null) {
-            return null;
-        }
-
-        int posicion = hash(clave);
+        if (clave == null) return null;
+        int posicion = hash(clave.toUpperCase()); // ← normalizar antes del hash
         EntradaDiccionario actual = tabla[posicion];
-
         while (actual != null) {
-            if (actual.clave.equals(clave)) {
+            if (actual.clave.equalsIgnoreCase(clave)) { // ← ignorar mayúsculas
                 return actual;
             }
-
             actual = actual.siguiente;
         }
-
         return null;
     }
+
 
     @Override
     public boolean insertar(String clave, Dispositivo dispositivo) {
@@ -223,30 +217,23 @@ public class DiccionarioDispositivos implements IDiccionarioDispositivos {
     @Override
     public void mostrar() {
         if (cantidad == 0) {
-            System.out.println("El diccionario de dispositivos está vacío");
+            System.out.println("No hay dispositivos registrados.");
             return;
         }
 
-        System.out.println("Diccionario de dispositivos:");
+        System.out.println("Dispositivos registrados (" + cantidad + "):");
+        System.out.println("─────────────────────────────────────────");
 
         for (int i = 0; i < capacidad; i++) {
             EntradaDiccionario actual = tabla[i];
-
-            if (actual != null) {
-                System.out.print("Posicion " + i + ": ");
-
-                while (actual != null) {
-                    System.out.print("[" + actual.clave + " -> " + actual.valor + "]");
-
-                    if (actual.siguiente != null) {
-                        System.out.print(" -> ");
-                    }
-
-                    actual = actual.siguiente;
-                }
-
-                System.out.println();
+            while (actual != null) {
+                System.out.println(actual.valor);
+                actual = actual.siguiente;
             }
         }
+
+        System.out.println("─────────────────────────────────────────");
     }
+
+
 }

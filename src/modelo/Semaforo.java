@@ -53,29 +53,16 @@ public class Semaforo extends Dispositivo {
         this.tiempoRojo = tiempoRojo;
     }
 
-    /*
-
-    public String getInterseccion() {
-        return interseccion;
-    }
 
 
-
-    public void setInterseccion(String interseccion) {
-        this.interseccion = interseccion;
-    }
-
-    /*
-     */
 
     @Override
     public String toString() {
-        return "Semaforo " + getId() +
-                // " | Interseccion: " + interseccion +
-                " | Estado: " + estado +
+        return "[Semáforo " + getId() + "]" +
+                " Estado: " + estado +
                 " | Verde: " + tiempoVerde + "s" +
                 " | Amarillo: " + tiempoAmarillo + "s" +
                 " | Rojo: " + tiempoRojo + "s" +
-                " | Activo: " + isActivo();
+                " | " + (isActivo() ? "ACTIVO" : "INACTIVO");
     }
 }

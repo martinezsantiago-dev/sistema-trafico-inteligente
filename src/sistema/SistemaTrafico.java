@@ -1,3 +1,4 @@
+// sistema/SistemaTrafico.java
 package sistema;
 
 import modelo.*;
@@ -11,12 +12,18 @@ public class SistemaTrafico {
     private ColaPrioridadEmergencias colaEmergencias;
     private PilaHistorial<Cambio> historialCambios;
 
+    // Seguimiento de posición del ciudadano
+    private String interseccionActualCiudadano;
+    private Vehiculo vehiculoCiudadano;
+
     public SistemaTrafico() {
         this.dispositivos = new DiccionarioDispositivos(31);
         this.grafoVial = new GrafoVial();
         this.arbolTerritorial = new ArbolTerritorial();
         this.colaEmergencias = new ColaPrioridadEmergencias();
         this.historialCambios = new PilaHistorial<>();
+        this.interseccionActualCiudadano = null;
+        this.vehiculoCiudadano = null;
     }
 
     // ===== DISPOSITIVOS =====
@@ -34,9 +41,7 @@ public class SistemaTrafico {
         if (d == null) return false;
         String anterior = String.valueOf(d.isActivo());
         boolean resultado = dispositivos.modificarActivo(id, true);
-        if (resultado) {
-            historialCambios.apilar(new Cambio("Dispositivo", id, "activo", anterior, "true"));
-        }
+        if (resultado) historialCambios.apilar(new Cambio("Dispositivo", id, "activo", anterior, "true"));
         return resultado;
     }
 
@@ -45,9 +50,7 @@ public class SistemaTrafico {
         if (d == null) return false;
         String anterior = String.valueOf(d.isActivo());
         boolean resultado = dispositivos.modificarActivo(id, false);
-        if (resultado) {
-            historialCambios.apilar(new Cambio("Dispositivo", id, "activo", anterior, "false"));
-        }
+        if (resultado) historialCambios.apilar(new Cambio("Dispositivo", id, "activo", anterior, "false"));
         return resultado;
     }
 
@@ -82,36 +85,109 @@ public class SistemaTrafico {
                 alturaOrigen, alturaDestino, distanciaMetros, tiempoMinutos, dobleMano);
     }
 
+    // Resuelve nombre de calle a ID de intersección
+    public String resolverInterseccion(String nombreCalle, int altura) {
+        return grafoVial.obtenerInterseccionCercana(nombreCalle, altura);
+    }
+
+    // Para cuando el usuario informa nombre de calle sin altura
+    public String resolverInterseccionPorCalle(String nombreCalle) {
+        return grafoVial.obtenerInterseccionPorNombreCalle(nombreCalle);
+    }
+
+    public boolean bloquearCallePorNombre(String nombreCalle) {
+        return grafoVial.bloquearCallePorNombre(nombreCalle);
+    }
+
+    public boolean desbloquearCallePorNombre(String nombreCalle) {
+        return grafoVial.desbloquearCallePorNombre(nombreCalle);
+    }
+
+    public boolean existeInterseccion(String id) {
+        return grafoVial.buscarInterseccion(id) != null;
+    }
+
     public boolean calcularRutaMenosTramos(String origenId, String destinoId) {
-        return grafoVial.mostrarRutaMenosTramosPorIntersecciones(origenId, destinoId);
+        return grafoVial.mostrarRutaMenosTramos(origenId, destinoId);
     }
 
     public boolean calcularRutaMasRapida(String origenId, String destinoId) {
-        return grafoVial.mostrarRutaMasRapidaPorIntersecciones(origenId, destinoId);
+        return grafoVial.mostrarRutaMasRapida(origenId, destinoId);
     }
 
     public boolean calcularRutaMasCorta(String origenId, String destinoId) {
-        return grafoVial.mostrarRutaMasCortaPorIntersecciones(origenId, destinoId);
+        return grafoVial.mostrarRutaMasCorta(origenId, destinoId);
     }
 
     public boolean bloquearCalle(String origenId, String destinoId) {
-        return grafoVial.bloquearCalleDobleMano(origenId, destinoId);
+        boolean resultado = grafoVial.bloquearCalle(origenId, destinoId);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle",
+                    origenId + "-" + destinoId, "bloqueada", "false", "true"));
+        }
+        return resultado;
     }
 
     public boolean desbloquearCalle(String origenId, String destinoId) {
-        return grafoVial.desbloquearCalleDobleMano(origenId, destinoId);
+        boolean resultado = grafoVial.desbloquearCalle(origenId, destinoId);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle",
+                    origenId + "-" + destinoId, "bloqueada", "true", "false"));
+        }
+        return resultado;
+    }
+
+    public boolean registrarDemoraEnCalle(String origenId, String destinoId, int minutos) {
+        boolean resultado = grafoVial.registrarDemoraEnCalle(origenId, destinoId, minutos);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle",
+                    origenId + "-" + destinoId, "demora", "0", String.valueOf(minutos)));
+        }
+        return resultado;
     }
 
     public void mostrarRedVial() {
         grafoVial.mostrarGrafo();
     }
 
-    public boolean registrarVehiculo(String interseccionId, Vehiculo vehiculo) {
-        return grafoVial.registrarVehiculoEnInterseccion(interseccionId, vehiculo);
+    public void mostrarIntersecciones() {
+        grafoVial.mostrarIntersecciones();
     }
 
-    public Vehiculo liberarVehiculo(String interseccionId) {
-        return grafoVial.liberarVehiculoEnInterseccion(interseccionId);
+    public void mostrarCallesDisponibles() {
+        grafoVial.mostrarCallesDisponibles();
+    }
+
+    // ===== SEGUIMIENTO DE VEHÍCULO =====
+
+    public void registrarVehiculoCiudadano(String patente, String tipo) {
+        vehiculoCiudadano = new Vehiculo(patente, tipo, null);
+        System.out.println("Vehículo registrado: " + patente + " (" + tipo + ")");
+    }
+
+    public boolean tieneVehiculo() {
+        return vehiculoCiudadano != null;
+    }
+
+    public String getInterseccionActualCiudadano() {
+        return interseccionActualCiudadano;
+    }
+
+    // El ciudadano informa que llegó a destino — ese destino pasa a ser el origen siguiente
+    public void informarLlegadaADestino(String interseccionDestinoId) {
+        interseccionActualCiudadano = interseccionDestinoId;
+        if (vehiculoCiudadano != null) {
+            vehiculoCiudadano.setInterseccionActual(interseccionDestinoId);
+            grafoVial.registrarVehiculoEnInterseccion(interseccionDestinoId, vehiculoCiudadano);
+        }
+        Interseccion i = grafoVial.buscarInterseccion(interseccionDestinoId);
+        String nombre = (i != null) ? i.getNombre() : interseccionDestinoId;
+        System.out.println("Posición actualizada: ahora está en " + nombre);
+        System.out.println("Esta intersección será usada como origen en la próxima consulta.");
+    }
+
+    public void limpiarPosicionActual() {
+        interseccionActualCiudadano = null;
     }
 
     // ===== EMERGENCIAS =====
@@ -121,16 +197,16 @@ public class SistemaTrafico {
         System.out.println("Emergencia registrada: " + emergencia);
     }
 
-    public Emergencia atenderEmergencia() {
-        Emergencia e = colaEmergencias.atender();
-        if (e == null) {
-            System.out.println("No hay emergencias pendientes.");
-        } else {
-            System.out.println("Atendiendo: " + e);
-        }
-        return e;
+    public boolean hayEmergencias() {
+        return !colaEmergencias.estaVacia();
     }
 
+    public Emergencia atenderEmergencia() {
+        Emergencia e = colaEmergencias.atender();
+        if (e == null) System.out.println("No hay emergencias pendientes.");
+        else System.out.println("Atendiendo: " + e);
+        return e;
+    }
 
     public void mostrarEmergencias() {
         colaEmergencias.mostrar();
@@ -138,24 +214,45 @@ public class SistemaTrafico {
 
     // ===== HISTORIAL =====
 
-    public void deshacerUltimoCambio() {
+    public Cambio obtenerUltimoCambio() {
+        return historialCambios.tope();
+    }
+
+    public boolean deshacerUltimoCambio() {
         Cambio cambio = historialCambios.desapilar();
-        if (cambio == null) {
-            System.out.println("No hay cambios para deshacer.");
-            return;
-        }
-        System.out.println("Deshaciendo: " + cambio);
+        if (cambio == null) return false;
         revertirCambio(cambio);
+        return true;
     }
 
     private void revertirCambio(Cambio cambio) {
         if (cambio.getAtributo().equals("activo")) {
-            boolean valorAnterior = Boolean.parseBoolean(cambio.getValorAnterior());
-            dispositivos.modificarActivo(cambio.getIdEntidad(), valorAnterior);
+            dispositivos.modificarActivo(cambio.getIdEntidad(),
+                    Boolean.parseBoolean(cambio.getValorAnterior()));
+
         } else if (cambio.getAtributo().equals("estado")) {
             Dispositivo d = dispositivos.obtener(cambio.getIdEntidad());
-            if (d instanceof Semaforo) {
-                ((Semaforo) d).setEstado(Semaforo.Estado.valueOf(cambio.getValorAnterior()));
+            if (d instanceof Semaforo) {  // instanceof sirve para comprobar si un objeto es una instancia de una clase específica o de una de sus subclases
+                ((Semaforo) d).setEstado(
+                        Semaforo.Estado.valueOf(cambio.getValorAnterior()));
+            }
+
+        } else if (cambio.getAtributo().equals("bloqueada")) {
+            String[] partes = cambio.getIdEntidad().split("-");
+            if (partes.length == 2) {
+                boolean valorAnterior = Boolean.parseBoolean(cambio.getValorAnterior());
+                if (valorAnterior) {
+                    grafoVial.bloquearCalle(partes[0], partes[1]);
+                } else {
+                    grafoVial.desbloquearCalle(partes[0], partes[1]);
+                }
+            }
+
+        } else if (cambio.getAtributo().equals("demora")) {
+            String[] partes = cambio.getIdEntidad().split("-");
+            if (partes.length == 2) {
+                grafoVial.registrarDemoraEnCalle(partes[0], partes[1],
+                        Integer.parseInt(cambio.getValorAnterior()));
             }
         }
     }
@@ -164,33 +261,17 @@ public class SistemaTrafico {
         historialCambios.mostrar();
     }
 
+    public String normalizarIdInterseccion(String id) {
+        return grafoVial.normalizarId(id);
+    }
+
+
     // ===== TERRITORIO =====
 
-    public void crearCiudad(String nombre) {
-        arbolTerritorial.crearCiudad(nombre);
-    }
-
-    public boolean agregarZona(String nombreZona) {
-        return arbolTerritorial.agregarZona(nombreZona);
-    }
-
-    public boolean agregarBarrio(String nombreZona, String nombreBarrio) {
-        return arbolTerritorial.agregarBarrio(nombreZona, nombreBarrio);
-    }
-
-    public boolean agregarManzana(String nombreBarrio, String nombreManzana) {
-        return arbolTerritorial.agregarManzana(nombreBarrio, nombreManzana);
-    }
-
-    public void incrementarIncidentesEn(String nombre) {
-        arbolTerritorial.incrementarIncidentes(nombre);
-    }
-
-    public void mostrarTerritorio() {
-        arbolTerritorial.mostrar();
-    }
-
-    public void mostrarIntersecciones() {
-        grafoVial.mostrarIntersecciones();
-    }
+    public void crearCiudad(String nombre) { arbolTerritorial.crearCiudad(nombre); }
+    public boolean agregarZona(String nombreZona) { return arbolTerritorial.agregarZona(nombreZona); }
+    public boolean agregarBarrio(String z, String b) { return arbolTerritorial.agregarBarrio(z, b); }
+    public boolean agregarManzana(String b, String m) { return arbolTerritorial.agregarManzana(b, m); }
+    public void incrementarIncidentesEn(String nombre) { arbolTerritorial.incrementarIncidentes(nombre); }
+    public void mostrarTerritorio() { arbolTerritorial.mostrar(); }
 }
