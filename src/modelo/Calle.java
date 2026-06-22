@@ -1,5 +1,7 @@
 package modelo;
 
+import java.text.Normalizer;
+
     public class Calle {
         // esta clase es clave. va a representar una arista del grafo.
         private String origenId;  // desde que interseccion sale. Ejemplo: I1
@@ -82,7 +84,7 @@ package modelo;
                 return false;
             }
 
-            if (!nombre.equalsIgnoreCase(calleBuscada)) {
+            if (!normalizar(nombre).equals(normalizar(calleBuscada))) {
                 return false;
             }
 
@@ -98,6 +100,13 @@ package modelo;
             }
 
             return altura >= menor && altura <= mayor;
+        }
+
+        private static String normalizar(String texto) {
+            if (texto == null) return "";
+            String sinAcentos = Normalizer.normalize(texto, Normalizer.Form.NFD)
+                    .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+            return sinAcentos.toUpperCase().trim();
         }
 
         public String obtenerInterseccionMasCercana(int altura) {

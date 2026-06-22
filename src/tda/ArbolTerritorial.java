@@ -66,7 +66,7 @@ public class ArbolTerritorial implements IArbolTerritorial {
 
     private NodoTerritorial buscarNodo(NodoTerritorial actual, String nombre) {
         if (actual == null) return null;
-        if (actual.getNombre().equals(nombre)) return actual;
+        if (normalizar(actual.getNombre()).equals(normalizar(nombre))) return actual;
 
         Nodo<NodoTerritorial> aux = actual.getHijos().getCabeza();
         while (aux != null) {
@@ -75,6 +75,13 @@ public class ArbolTerritorial implements IArbolTerritorial {
             aux = aux.siguiente;
         }
         return null;
+    }
+
+    private static String normalizar(String texto) {
+        if (texto == null) return "";
+        String sinAcentos = java.text.Normalizer.normalize(texto, java.text.Normalizer.Form.NFD)
+                .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        return sinAcentos.toUpperCase().trim();
     }
 
     @Override
