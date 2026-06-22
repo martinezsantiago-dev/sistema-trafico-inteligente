@@ -506,4 +506,47 @@ public class GrafoVial implements IGrafoVial {
     } // para que el usuario pueda agregar ids en minuscula
 
 
+    public ListaEnlazada<String> buscarInterseccionesPorCalle(String nombreCalle) {
+        ListaEnlazada<String> resultado = new ListaEnlazada<>();
+        if (nombreCalle == null) return resultado;
+
+        Nodo<Interseccion> auxI = intersecciones.getCabeza();
+        while (auxI != null) {
+            // Busca en el NOMBRE de la intersección
+            if (auxI.dato.getNombre().toLowerCase().contains(nombreCalle.toLowerCase())) {
+                resultado.insertarFinal(auxI.dato.getId());
+            }
+            auxI = auxI.siguiente;
+        }
+        return resultado;
+    }
+    public String resolverEntrada(String entrada) {
+        if (entrada == null) return null;
+
+        // 1. Por nombre de calle exacto — si hay varias intersecciones lo maneja pedirInterseccion
+        Nodo<Interseccion> auxI = intersecciones.getCabeza();
+        while (auxI != null) {
+            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
+            while (auxC != null) {
+                if (auxC.dato.getNombre().equalsIgnoreCase(entrada)) {
+                    return auxI.dato.getId();
+                }
+                auxC = auxC.siguiente;
+            }
+            auxI = auxI.siguiente;
+        }
+
+        // 2. Por nombre de intersección exacto
+        auxI = intersecciones.getCabeza();
+        while (auxI != null) {
+            if (auxI.dato.getNombre().equalsIgnoreCase(entrada)) {
+                return auxI.dato.getId();
+            }
+            auxI = auxI.siguiente;
+        }
+
+        // 3. Por ID normalizado
+        return normalizarId(entrada);
+    }
+
 }

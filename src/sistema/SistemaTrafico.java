@@ -212,6 +212,28 @@ public class SistemaTrafico {
         colaEmergencias.mostrar();
     }
 
+    public int cantidadSemaforos() {
+        return dispositivos.contarPorTipo("Semaforo");
+    }
+
+    public int cantidadCamaras() {
+        return dispositivos.contarPorTipo("Camara");
+    }
+
+    public ListaEnlazada<String> buscarInterseccionesPorCalle(String nombreCalle) {
+        return grafoVial.buscarInterseccionesPorCalle(nombreCalle);
+    }
+
+    public String resolverEntradaInterseccion(String entrada) {
+        return grafoVial.resolverEntrada(entrada);
+    }
+
+    public String getNombreInterseccion(String id) {
+        Interseccion i = grafoVial.buscarInterseccion(id);
+        if (i == null) return "desconocida";
+        return i.getNombre();
+    }
+
     // ===== HISTORIAL =====
 
     public Cambio obtenerUltimoCambio() {

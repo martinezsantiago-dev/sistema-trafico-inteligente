@@ -2,14 +2,15 @@ package sistema;
 
 import modelo.*;
 import java.util.Scanner;
+import tda.ListaEnlazada;
+import tda.Nodo;
 
 public class Main {
 
     private static SistemaTrafico sistema = new SistemaTrafico();
     private static Scanner scanner = new Scanner(System.in);
     private static int contadorEmergencias = 1;
-    private static int contadorSemaforos = 4;
-    private static int contadorCamaras = 3;
+
 
     public static void main(String[] args) {
         cargarDatosIniciales();
@@ -218,32 +219,27 @@ public class Main {
 
     private static void registrarSemaforo() {
         sistema.mostrarIntersecciones();
-        String id = "S" + contadorSemaforos++;
-        String calle = leerTexto("Calle donde está el semáforo: ");
-        int altura = leerEnteroPositivo("Altura en esa calle: ");
-        String interseccionId = pedirInterseccion("intersección asociada");
+        String interseccionId = pedirInterseccion("intersección donde instalar el semáforo");
         if (interseccionId == null) return;
+
         int tiempoVerde    = leerEnteroPositivo("Tiempo verde (seg): ");
         int tiempoAmarillo = leerEnteroPositivo("Tiempo amarillo (seg): ");
         int tiempoRojo     = leerEnteroPositivo("Tiempo rojo (seg): ");
 
+        String id = "S" + (sistema.cantidadSemaforos() + 1);        // La dirección se genera desde la intersección, sin pedirla al usuario
         boolean resultado = sistema.registrarSemaforo(
-                new Semaforo(id, new Direccion(calle, altura), interseccionId,
+                new Semaforo(id, new Direccion(interseccionId, 0), interseccionId,
                         tiempoVerde, tiempoAmarillo, tiempoRojo));
         System.out.println(resultado
-                ? "Semáforo registrado con ID: " + id
-                : "Error: ya existe un dispositivo con ese ID.");
+                ? "Semáforo " + id + " registrado correctamente."
+                : "Error al registrar el semáforo.");
     }
 
     private static void registrarCamara() {
         sistema.mostrarIntersecciones();
-        String id = "C" + contadorCamaras++;
-        String calle = leerTexto("Calle donde está la cámara: ");
-        int altura = leerEnteroPositivo("Altura en esa calle: ");
-        String interseccionId = pedirInterseccion("intersección asociada");
+        String interseccionId = pedirInterseccion("intersección donde instalar la cámara");
         if (interseccionId == null) return;
 
-        // Tipo con opciones fijas
         String tipo = "";
         while (tipo.isEmpty()) {
             System.out.println("Tipo de cámara:");
@@ -260,49 +256,29 @@ public class Main {
             }
         }
 
+        String id = "C" + (sistema.cantidadCamaras() + 1);
         boolean resultado = sistema.registrarCamara(
-                new Camara(id, new Direccion(calle, altura), interseccionId, tipo));
+                new Camara(id, new Direccion(interseccionId, 0), interseccionId, tipo));
         System.out.println(resultado
-                ? "Cámara registrada con ID: " + id
-                : "Error: ya existe un dispositivo con ese ID.");
+                ? "Cámara " + id + " registrada correctamente."
+                : "Error al registrar la cámara.");
     }
 
     private static void gestionarBloqueo(boolean bloquear) {
-        System.out.println("\nCalles disponibles:");
         sistema.mostrarCallesDisponibles();
-        System.out.println("\nIntersecciones disponibles:");
-        sistema.mostrarIntersecciones();
 
-        System.out.println("\nPuede ingresar el nombre de la calle para bloquearla en ambas");
-        System.out.println("direcciones, o ingresar origen y destino para una dirección específica.");
-        System.out.println("¿Bloquear por nombre de calle o por dirección específica? (nombre/dir)");
-        System.out.print("> ");
-        String modo = scanner.nextLine().trim().toLowerCase();
+        String nombreCalle = leerTexto(bloquear
+                ? "Nombre de la calle a bloquear: "
+                : "Nombre de la calle a desbloquear: ");
 
-        if (modo.equals("nombre")) {
-            String nombreCalle = leerTexto("Nombre de la calle: ");
-            // bloquea en todas las direcciones que tenga esa calle
-            boolean resultado = bloquear
-                    ? sistema.bloquearCallePorNombre(nombreCalle)
-                    : sistema.desbloquearCallePorNombre(nombreCalle);
-            System.out.println(resultado
-                    ? (bloquear ? "Calle bloqueada en todas sus direcciones."
-                    : "Calle desbloqueada en todas sus direcciones.")
-                    : "No se encontró esa calle.");
+        boolean resultado = bloquear
+                ? sistema.bloquearCallePorNombre(nombreCalle)
+                : sistema.desbloquearCallePorNombre(nombreCalle);
 
-        } else {
-            String origenId  = pedirInterseccion("intersección origen");
-            if (origenId == null) return;
-            String destinoId = pedirInterseccion("intersección destino");
-            if (destinoId == null) return;
-
-            boolean resultado = bloquear
-                    ? sistema.bloquearCalle(origenId, destinoId)
-                    : sistema.desbloquearCalle(origenId, destinoId);
-            System.out.println(resultado
-                    ? (bloquear ? "Dirección bloqueada." : "Dirección desbloqueada.")
-                    : "No se encontró esa calle en esa dirección.");
-        }
+        System.out.println(resultado
+                ? (bloquear ? "Calle '" + nombreCalle + "' bloqueada."
+                : "Calle '" + nombreCalle + "' desbloqueada.")
+                : "No se encontró la calle '" + nombreCalle + "'.");
     }
 
     private static void registrarDemora() {
@@ -338,7 +314,7 @@ public class Main {
      * En ambos casos se acepta cualquier capitalización.
      */
     private static String pedirInterseccion(String contexto) {
-        System.out.println("Ingrese el nombre de calle o ID de la " + contexto + ":");
+        System.out.println("Ingrese nombre de calle, nombre del cruce o ID de la " + contexto + ":");
         System.out.print("> ");
         String entrada = scanner.nextLine().trim();
 
@@ -347,22 +323,54 @@ public class Main {
             return null;
         }
 
-        // Primero intenta por nombre de calle
-        String id = sistema.resolverInterseccionPorCalle(entrada);
+        // Primero verifica si es un nombre de calle con múltiples intersecciones
+        ListaEnlazada<String> coincidencias = sistema.buscarInterseccionesPorCalle(entrada);
 
-        // Si no, intenta como ID directo y normaliza la capitalización
-        if (id == null) {
-            id = sistema.normalizarIdInterseccion(entrada);
-            if (id == null) {
-                System.out.println("No se encontró ninguna intersección para: " + entrada);
-                return null;
+        if (!coincidencias.estaVacia() && coincidencias.tamanio() > 1) {
+            // Hay ambigüedad — pregunta cuál
+            System.out.println("La calle '" + entrada + "' pasa por varias intersecciones:");
+            int numero = 1;
+            Nodo<String> aux = coincidencias.getCabeza();
+            while (aux != null) {
+                String nombre = sistema.getNombreInterseccion(aux.dato);
+                System.out.println("  " + numero + ". " + aux.dato + " (" + nombre + ")");
+                numero++;
+                aux = aux.siguiente;
             }
+
+            int eleccion = 0;
+            while (eleccion < 1 || eleccion > coincidencias.tamanio()) {
+                System.out.print("Seleccione (1-" + coincidencias.tamanio() + "): ");
+                eleccion = leerEntero();
+                if (eleccion < 1 || eleccion > coincidencias.tamanio())
+                    System.out.println("Opción inválida.");
+            }
+
+            // Obtiene el ID elegido
+            aux = coincidencias.getCabeza();
+            for (int i = 1; i < eleccion; i++) aux = aux.siguiente;
+            String id = aux.dato;
+            System.out.println("  → " + id);
+            return id;
+        }
+
+        if (!coincidencias.estaVacia()) {
+            // Solo una intersección con ese nombre de calle
+            String id = coincidencias.getCabeza().dato;
+            System.out.println("  → " + id);
+            return id;
+        }
+
+        // Si no encontró por calle, intenta por nombre de intersección o ID
+        String id = sistema.resolverEntradaInterseccion(entrada);
+        if (id == null) {
+            System.out.println("No se encontró ninguna intersección para: " + entrada);
+            return null;
         }
 
         System.out.println("  → " + id);
         return id;
     }
-
 
     // ===== DATOS INICIALES =====
 

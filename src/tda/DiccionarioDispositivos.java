@@ -2,6 +2,8 @@ package tda;
 
 import modelo.Dispositivo;
 import tda.interfaces.IDiccionarioDispositivos;
+import modelo.Semaforo;
+import modelo.Camara;
 
 public class DiccionarioDispositivos implements IDiccionarioDispositivos {
 
@@ -61,6 +63,20 @@ public class DiccionarioDispositivos implements IDiccionarioDispositivos {
 
         cantidad++;
         return true;
+    }
+
+
+    public int contarPorTipo(String tipo) {
+        int contador = 0;
+        for (int i = 0; i < capacidad; i++) {
+            EntradaDiccionario actual = tabla[i];
+            while (actual != null) {
+                if (tipo.equals("Semaforo") && actual.valor instanceof Semaforo) contador++;
+                if (tipo.equals("Camara") && actual.valor instanceof Camara) contador++;
+                actual = actual.siguiente;
+            }
+        }
+        return contador;
     }
 
     public boolean insertar(Dispositivo dispositivo) {
