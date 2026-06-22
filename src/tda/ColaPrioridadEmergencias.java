@@ -73,6 +73,33 @@ public class ColaPrioridadEmergencias implements IColaPrioridadEmergencias {
         return cabeza.dato;
     }
 
+    public void contarPorZona(ListaEnlazada<String> zonas, ListaEnlazada<int[]> conteos) {
+        Nodo<Emergencia> aux = cabeza;
+        while (aux != null) {
+            String zona = aux.dato.getZona();
+            if (zona == null) zona = "Sin zona";
+
+            // Buscar si ya existe
+            Nodo<String> nZ = zonas.getCabeza();
+            Nodo<int[]> nC = conteos.getCabeza();
+            boolean encontrada = false;
+            while (nZ != null) {
+                if (nZ.dato.equals(zona)) {
+                    nC.dato[0]++;
+                    encontrada = true;
+                    break;
+                }
+                nZ = nZ.siguiente;
+                nC = nC.siguiente;
+            }
+            if (!encontrada) {
+                zonas.insertarFinal(zona);
+                conteos.insertarFinal(new int[]{1});
+            }
+            aux = aux.siguiente;
+        }
+    }
+
     @Override
     public boolean estaVacia() {
         return cabeza == null;

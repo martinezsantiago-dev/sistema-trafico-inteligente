@@ -88,6 +88,7 @@ public class Main {
             System.out.println("13. Desbloquear calle");
             System.out.println("14. Registrar demora en calle");
             System.out.println("15. Registrar emergencia");
+            System.out.println("16. Reporte de emergencias por zona");
             System.out.println("0. Volver");
             System.out.print("Seleccione: ");
             opcion = leerEntero();
@@ -108,6 +109,7 @@ public class Main {
                 case 13: gestionarBloqueo(false); break;
                 case 14: registrarDemora(); break;
                 case 15: reportarEmergencia(); break;
+                case 16: sistema.reporteEmergenciasPorZona(); break;
                 case 0:  break;
                 default: System.out.println("Opción inválida.");
             }
@@ -122,11 +124,14 @@ public class Main {
         String interseccionId = pedirInterseccion("intersección afectada");
         if (interseccionId == null) return;
 
+        // Obtener zona desde la intersección
+        String zona = sistema.getZonaDeInterseccion(interseccionId);
+
         int gravedad = leerGravedad();
         String descripcion = leerTexto("Descripción del incidente: ");
         String id = "E" + contadorEmergencias++;
 
-        sistema.reportarEmergencia(new Emergencia(id, gravedad, interseccionId, descripcion));
+        sistema.reportarEmergencia(new Emergencia(id, gravedad, interseccionId, descripcion, zona));
     }
 
     private static void calcularRuta(String tipo) {
@@ -271,14 +276,15 @@ public class Main {
                 ? "Nombre de la calle a bloquear: "
                 : "Nombre de la calle a desbloquear: ");
 
+        String nombreReal = sistema.getNombreCalle(nombreCalle);
+
         boolean resultado = bloquear
                 ? sistema.bloquearCallePorNombre(nombreCalle)
                 : sistema.desbloquearCallePorNombre(nombreCalle);
 
-        System.out.println(resultado
-                ? (bloquear ? "Calle '" + nombreCalle + "' bloqueada."
-                : "Calle '" + nombreCalle + "' desbloqueada.")
-                : "No se encontró la calle '" + nombreCalle + "'.");
+        if (!resultado) {
+            System.out.println("No se encontró la calle '" + nombreReal + "'.");
+        }
     }
 
     private static void registrarDemora() {
@@ -398,12 +404,12 @@ public class Main {
 
         // ===== INTERSECCIONES =====
         //         ID    Nombre del cruce
-        sistema.agregarInterseccion(new Interseccion("I1", "Rivadavia y Belgrano"));
-        sistema.agregarInterseccion(new Interseccion("I2", "Rivadavia y San Martín"));
-        sistema.agregarInterseccion(new Interseccion("I3", "Belgrano y San Martín"));
-        sistema.agregarInterseccion(new Interseccion("I4", "Rivadavia y Lavalle"));
-        sistema.agregarInterseccion(new Interseccion("I5", "Corrientes y San Martín"));
-        sistema.agregarInterseccion(new Interseccion("I6", "Corrientes y Lavalle"));
+        sistema.agregarInterseccion(new Interseccion("I1", "Rivadavia y Belgrano", "Zona Centro"));
+        sistema.agregarInterseccion(new Interseccion("I2", "Rivadavia y San Martín", "Zona Centro"));
+        sistema.agregarInterseccion(new Interseccion("I3", "Belgrano y San Martín", "Zona Norte"));
+        sistema.agregarInterseccion(new Interseccion("I4", "Rivadavia y Lavalle", "Zona Sur"));
+        sistema.agregarInterseccion(new Interseccion("I5", "Corrientes y San Martín", "Zona Norte"));
+        sistema.agregarInterseccion(new Interseccion("I6", "Corrientes y Lavalle", "Zona Sur"));
 
         // ===== CALLES =====
         // agregarCalle(origen, destino, nombre, altOrigen, altDestino, metros, minutos, dobleMano)

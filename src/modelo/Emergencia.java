@@ -7,14 +7,24 @@ public class    Emergencia {
     private String interseccionId;
     private long timestamp;
     private String descripcion;
+    private String zona;
 
+    // Constructor original que ya tenías — NO lo toques
     public Emergencia(String id, int gravedad, String interseccionId, String descripcion) {
         this.id = id;
         this.gravedad = gravedad;
         this.interseccionId = interseccionId;
         this.descripcion = descripcion;
         this.timestamp = System.currentTimeMillis();
+        this.zona = "Sin zona";  // solo agregá esta línea acá
     }
+
+    // Constructor nuevo con zona
+    public Emergencia(String id, int gravedad, String interseccionId, String descripcion, String zona) {
+        this(id, gravedad, interseccionId, descripcion);
+        this.zona = zona;
+    }
+
 
     public String getId() {
         return id;
@@ -22,6 +32,10 @@ public class    Emergencia {
 
     public int getGravedad() {
         return gravedad;
+    }
+
+    public String getZona() {
+        return zona;
     }
 
     public String getInterseccionId() {
@@ -52,6 +66,7 @@ public class    Emergencia {
     public String toString() {
         return "Emergencia " + id +
                 " | Gravedad: " + gravedad +
+                " | Zona: " + (zona != null ? zona : "sin zona") +
                 " | Interseccion: " + interseccionId +
                 " | Descripcion: " + descripcion;
     }

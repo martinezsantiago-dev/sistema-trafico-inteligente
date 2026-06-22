@@ -9,12 +9,15 @@ public class Interseccion {
     private String nombre;
     private ListaEnlazada<Calle> callesAdyacentes;
     private ColaFIFO<Vehiculo> colaVehiculos;
+    private String zona;
 
-    public Interseccion(String id, String nombre) {
+
+    public Interseccion(String id, String nombre, String zona) {
         this.id = id;
         this.nombre = nombre;
         this.callesAdyacentes = new ListaEnlazada<>();
         this.colaVehiculos = new ColaFIFO<>();
+        this.zona = zona;
     }
 
     public String getId() {
@@ -39,6 +42,10 @@ public class Interseccion {
 
     public Vehiculo liberarVehiculo() {
         return colaVehiculos.desencolar();
+    }
+
+    public String getZona() {
+        return zona;
     }
 
     public void mostrarVehiculos() {

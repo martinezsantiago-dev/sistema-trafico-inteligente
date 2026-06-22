@@ -457,6 +457,20 @@ public class GrafoVial implements IGrafoVial {
         return tramos;
     }
 
+    public String getNombreRealCalle(String nombreCalle) {
+        Nodo<Interseccion> auxI = intersecciones.getCabeza();
+        while (auxI != null) {
+            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
+            while (auxC != null) {
+                if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle))
+                    return auxC.dato.getNombre();
+                auxC = auxC.siguiente;
+            }
+            auxI = auxI.siguiente;
+        }
+        return nombreCalle;
+    }
+
     public boolean bloquearCallePorNombre(String nombreCalle) {
         if (nombreCalle == null) return false;
         boolean encontro = false;
@@ -465,7 +479,12 @@ public class GrafoVial implements IGrafoVial {
             Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
             while (auxC != null) {
                 if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle)) {
+                    if (auxC.dato.isBloqueada()) {          // ← agregás esto
+                        System.out.println("La calle '" + nombreCalle + "' ya estaba bloqueada.");
+                        return true;
+                    }
                     auxC.dato.setBloqueada(true);
+                    System.out.println("Calle '" + auxC.dato.getNombre() + "' bloqueada.");
                     encontro = true;
                 }
                 auxC = auxC.siguiente;
@@ -483,7 +502,13 @@ public class GrafoVial implements IGrafoVial {
             Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
             while (auxC != null) {
                 if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle)) {
+                    encontro = true;
+                    if (!auxC.dato.isBloqueada()) {
+                        System.out.println("La calle '" + nombreCalle + "' ya estaba desbloqueada.");
+                        return true; // ← true, se encontró, solo que ya estaba libre
+                    }
                     auxC.dato.setBloqueada(false);
+                    System.out.println("Calle '" + auxC.dato.getNombre() + "' desbloqueada.");
                     encontro = true;
                 }
                 auxC = auxC.siguiente;

@@ -201,6 +201,31 @@ public class SistemaTrafico {
         return !colaEmergencias.estaVacia();
     }
 
+    public void reporteEmergenciasPorZona() {
+        if (!hayEmergencias()) {
+            System.out.println("No hay emergencias pendientes.");
+            return;
+        }
+
+        // Recolectar zonas y conteos recorriendo la cola sin modificarla
+        ListaEnlazada<String> zonas = new ListaEnlazada<>();
+        ListaEnlazada<int[]> conteos = new ListaEnlazada<>();
+
+        // Necesitamos acceder a los nodos de la cola — usamos ColaPrioridadEmergencias.mostrarPorZona
+        colaEmergencias.contarPorZona(zonas, conteos);
+
+        System.out.println("\n=== REPORTE DE EMERGENCIAS POR ZONA ===");
+        Nodo<String> nZ = zonas.getCabeza();
+        Nodo<int[]> nC = conteos.getCabeza();
+        while (nZ != null) {
+            System.out.println("  " + nZ.dato + ": " + nC.dato[0] + " emergencia(s)");
+            nZ = nZ.siguiente;
+            nC = nC.siguiente;
+        }
+        System.out.println("=======================================");
+    }
+
+
     public Emergencia atenderEmergencia() {
         Emergencia e = colaEmergencias.atender();
         if (e == null) System.out.println("No hay emergencias pendientes.");
@@ -208,9 +233,20 @@ public class SistemaTrafico {
         return e;
     }
 
+    public String getZonaDeInterseccion(String id) {
+        Interseccion i = grafoVial.buscarInterseccion(id);
+        if (i == null) return "Sin zona";
+        return i.getZona();
+    }
+
     public void mostrarEmergencias() {
         colaEmergencias.mostrar();
     }
+
+    public String getNombreCalle(String nombreCalle) {
+        return grafoVial.getNombreRealCalle(nombreCalle);
+    }
+
 
     public int cantidadSemaforos() {
         return dispositivos.contarPorTipo("Semaforo");
