@@ -2,8 +2,8 @@
 
 ## Integrantes del grupo
 
-* Mastieri Ramiro
 * Martinez Santiago Nicolas
+* Mastieri Ramiro
 
 ## Alternativa elegida
 
