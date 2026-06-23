@@ -244,8 +244,8 @@ public class Main {
     }
 
     private static void registrarSemaforo() {
-        sistema.mostrarIntersecciones();
-        String interseccionId = pedirInterseccion("intersección donde instalar el semáforo");
+        System.out.println("\n¿En qué intersección instalar el semáforo?");
+        String interseccionId = seleccionarInterseccion();
         if (interseccionId == null) return;
 
         int tiempoVerde    = leerEnteroPositivo("Tiempo verde (seg): ");
@@ -262,8 +262,8 @@ public class Main {
     }
 
     private static void registrarCamara() {
-        sistema.mostrarIntersecciones();
-        String interseccionId = pedirInterseccion("intersección donde instalar la cámara");
+        System.out.println("\n¿En qué intersección instalar la cámara?");
+        String interseccionId = seleccionarInterseccion();
         if (interseccionId == null) return;
 
         String tipo = "";
