@@ -297,14 +297,16 @@ public class Main {
                 ? "Nombre de la calle a bloquear: "
                 : "Nombre de la calle a desbloquear: ");
 
-        String nombreReal = sistema.getNombreCalle(nombreCalle);
-
         boolean resultado = bloquear
                 ? sistema.bloquearCallePorNombre(nombreCalle)
                 : sistema.desbloquearCallePorNombre(nombreCalle);
 
-        if (!resultado) {
-            System.out.println("No se encontró la calle '" + nombreReal + "'.");
+        if (resultado) {
+            System.out.println(bloquear
+                    ? "Calle '" + nombreCalle + "' bloqueada correctamente."
+                    : "Calle '" + nombreCalle + "' desbloqueada correctamente.");
+        } else {
+            System.out.println("No se encontró la calle '" + nombreCalle + "'.");
         }
     }
 
