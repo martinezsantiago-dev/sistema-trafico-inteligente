@@ -342,7 +342,7 @@ public class Main {
             boolean resultado = sistema.registrarDemoraEnCalle(origenId, destinoId, 0);
             System.out.println(resultado
                     ? "Demora cancelada. Calle vuelve a tiempo normal."
-                    : "No había demora registrada en esa calle.");
+                    : "No existe calle entre esas intersecciones.");
             return;
         }
 
