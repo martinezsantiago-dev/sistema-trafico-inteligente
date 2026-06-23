@@ -126,7 +126,11 @@ public class ArbolTerritorial implements IArbolTerritorial {
         if (actual == null) return;
 
         for (int i = 0; i < nivel; i++) System.out.print("   ");
-        System.out.println("- " + actual);
+
+        String incidentes = (actual.getTipo().equals("Zona") && actual.getCantidadIncidentes() > 0)
+                ? " [Incidentes: " + actual.getCantidadIncidentes() + "]"
+                : "";
+        System.out.println("- " + actual.getTipo() + ": " + actual.getNombre() + incidentes);
 
         Nodo<NodoTerritorial> aux = actual.getHijos().getCabeza();
         while (aux != null) {
@@ -134,7 +138,6 @@ public class ArbolTerritorial implements IArbolTerritorial {
             aux = aux.siguiente;
         }
     }
-
     public NodoTerritorial getRaiz() {
         return raiz;
     }

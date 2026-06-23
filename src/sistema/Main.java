@@ -42,15 +42,15 @@ public class Main {
         int opcion;
         do {
             System.out.println("\n--- MENÚ CIUDADANO ---");
-            if (sistema.tieneVehiculo() && sistema.getInterseccionActualCiudadano() != null) {
-                System.out.println("[Posición actual registrada]");
+            if (sistema.getInterseccionActualCiudadano() != null) {
+                System.out.println("[Posición actual: " +
+                        sistema.getNombreInterseccion(sistema.getInterseccionActualCiudadano()) + "]");
             }
             System.out.println("1. Reportar emergencia");
             System.out.println("2. Calcular ruta (menos tramos)");
             System.out.println("3. Calcular ruta más rápida");
             System.out.println("4. Calcular ruta más corta por distancia");
             System.out.println("5. Ver zonas territoriales");
-            System.out.println("6. Informar llegada a destino");
             System.out.println("0. Volver");
             System.out.print("Seleccione: ");
             opcion = leerEntero();
@@ -61,7 +61,6 @@ public class Main {
                 case 3: calcularRuta("RAPIDA"); break;
                 case 4: calcularRuta("CORTA"); break;
                 case 5: sistema.mostrarTerritorio(); break;
-                case 6: informarLlegada(); break;
                 case 0: break;
                 default: System.out.println("Opción inválida.");
             }
@@ -136,9 +135,25 @@ public class Main {
     }
 
     private static void calcularRuta(String tipo) {
-        System.out.println("\n¿Desde dónde salís?");
-        String origenId = seleccionarInterseccion();
-        if (origenId == null) return;
+        String origenId;
+
+        if (sistema.getInterseccionActualCiudadano() != null) {
+            System.out.println("\nÚltima posición: " +
+                    sistema.getNombreInterseccion(sistema.getInterseccionActualCiudadano()));
+            System.out.println("¿Usarla como origen? (s/n)");
+            System.out.print("> ");
+            if (scanner.nextLine().trim().equalsIgnoreCase("s")) {
+                origenId = sistema.getInterseccionActualCiudadano();
+            } else {
+                System.out.println("\n¿Desde dónde salís?");
+                origenId = seleccionarInterseccion();
+                if (origenId == null) return;
+            }
+        } else {
+            System.out.println("\n¿Desde dónde salís?");
+            origenId = seleccionarInterseccion();
+            if (origenId == null) return;
+        }
 
         System.out.println("\n¿A dónde vas?");
         String destinoId = seleccionarInterseccion();
@@ -192,16 +207,6 @@ public class Main {
         Nodo<String> nodo = ids.getCabeza();
         for (int i = 1; i < eleccion; i++) nodo = nodo.siguiente;
         return nodo.dato;
-    }
-
-
-    private static void informarLlegada() {
-        System.out.println("\nIntersecciones disponibles:");
-        sistema.mostrarIntersecciones();
-        String interseccionId = pedirInterseccion("intersección a la que llegó");
-        if (interseccionId != null) {
-            sistema.informarLlegadaADestino(interseccionId);
-        }
     }
 
     // ===== ACCIONES OPERADOR =====

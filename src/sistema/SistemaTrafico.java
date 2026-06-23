@@ -201,30 +201,6 @@ public class SistemaTrafico {
         return !colaEmergencias.estaVacia();
     }
 
-    public void reporteEmergenciasPorZona() {
-        if (!hayEmergencias()) {
-            System.out.println("No hay emergencias pendientes.");
-            return;
-        }
-
-        // Recolectar zonas y conteos recorriendo la cola sin modificarla
-        ListaEnlazada<String> zonas = new ListaEnlazada<>();
-        ListaEnlazada<int[]> conteos = new ListaEnlazada<>();
-
-        // Necesitamos acceder a los nodos de la cola — usamos ColaPrioridadEmergencias.mostrarPorZona
-        colaEmergencias.contarPorZona(zonas, conteos);
-
-        System.out.println("\n=== REPORTE DE EMERGENCIAS POR ZONA ===");
-        Nodo<String> nZ = zonas.getCabeza();
-        Nodo<int[]> nC = conteos.getCabeza();
-        while (nZ != null) {
-            System.out.println("  " + nZ.dato + ": " + nC.dato[0] + " emergencia(s)");
-            nZ = nZ.siguiente;
-            nC = nC.siguiente;
-        }
-        System.out.println("=======================================");
-    }
-
 
     public Emergencia atenderEmergencia() {
         Emergencia e = colaEmergencias.atender();
@@ -338,5 +314,29 @@ public class SistemaTrafico {
     public boolean agregarBarrio(String z, String b) { return arbolTerritorial.agregarBarrio(z, b); }
     public boolean agregarManzana(String b, String m) { return arbolTerritorial.agregarManzana(b, m); }
     public void incrementarIncidentesEn(String nombre) { arbolTerritorial.incrementarIncidentes(nombre); }
-    public void mostrarTerritorio() { arbolTerritorial.mostrar(); }
+    public void mostrarTerritorio() {
+        arbolTerritorial.mostrar();
+        System.out.println();
+        reporteEmergenciasPorZona();
+    }
+    public void reporteEmergenciasPorZona() {
+        System.out.println("=== EMERGENCIAS POR ZONA ===");
+        ListaEnlazada<String> zonas = new ListaEnlazada<>();
+        ListaEnlazada<int[]> conteos = new ListaEnlazada<>();
+        colaEmergencias.contarPorZona(zonas, conteos);
+
+        if (zonas.estaVacia()) {
+            System.out.println("  No hay emergencias pendientes.");
+        } else {
+            Nodo<String> nZ = zonas.getCabeza();
+            Nodo<int[]> nC = conteos.getCabeza();
+            while (nZ != null) {
+                System.out.println("  " + nZ.dato + ": " + nC.dato[0] + " emergencia(s)");
+                nZ = nZ.siguiente;
+                nC = nC.siguiente;
+            }
+        }
+        System.out.println("============================");
+    }
+
 }
