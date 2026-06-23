@@ -26,6 +26,10 @@ public class SistemaTrafico {
         this.vehiculoCiudadano = null;
     }
 
+    public Vehiculo liberarVehiculoDeInterseccion(String id) {
+        return grafoVial.liberarVehiculoEnInterseccion(id);
+    }
+
     // ===== DISPOSITIVOS =====
 
     public boolean registrarSemaforo(Semaforo semaforo) {

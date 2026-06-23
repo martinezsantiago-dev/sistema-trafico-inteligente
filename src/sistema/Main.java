@@ -89,6 +89,7 @@ public class Main {
             System.out.println("14. Registrar demora en calle");
             System.out.println("15. Registrar emergencia");
             System.out.println("16. Reporte de emergencias por zona");
+            System.out.println("17. Liberar vehículo de intersección");
             System.out.println("0. Volver");
             System.out.print("Seleccione: ");
             opcion = leerEntero();
@@ -110,6 +111,7 @@ public class Main {
                 case 14: registrarDemora(); break;
                 case 15: reportarEmergencia(); break;
                 case 16: sistema.reporteEmergenciasPorZona(); break;
+                case 17: liberarVehiculo(); break;
                 case 0:  break;
                 default: System.out.println("Opción inválida.");
             }
@@ -596,6 +598,16 @@ public class Main {
         } else {
             System.out.println("No se pudo deshacer el cambio.");
         }
+    }
+
+
+    private static void liberarVehiculo() {
+        System.out.println("\n¿De qué intersección liberar vehículo?");
+        String id = seleccionarInterseccion();
+        if (id == null) return;
+        Vehiculo v = sistema.liberarVehiculoDeInterseccion(id);
+        if (v == null) System.out.println("No hay vehículos esperando.");
+        else System.out.println("Vehículo liberado: " + v);
     }
 
 }
