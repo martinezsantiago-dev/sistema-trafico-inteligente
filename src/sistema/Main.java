@@ -522,6 +522,7 @@ public class Main {
         sistema.registrarCamara(new Camara("C3",
                 new Direccion("Corrientes",1000), "I6", "seguridad"));
 
+        sistema.registrarVehiculoCiudadano("ABC123", "Auto");
         System.out.println("Sistema iniciado.");
         System.out.println();
         System.out.println("Mapa cargado:");
