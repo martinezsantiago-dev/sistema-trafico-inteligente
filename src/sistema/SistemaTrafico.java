@@ -139,7 +139,7 @@ public class SistemaTrafico {
 
     public boolean registrarDemoraEnCalle(String origenId, String destinoId, int minutos) {
         boolean resultado = grafoVial.registrarDemoraEnCalle(origenId, destinoId, minutos);
-        if (resultado) {
+        if (resultado && minutos > 0) {
             historialCambios.apilar(new Cambio("Calle",
                     origenId + "-" + destinoId, "demora", "0", String.valueOf(minutos)));
         }
@@ -316,6 +316,10 @@ public class SistemaTrafico {
                         Integer.parseInt(cambio.getValorAnterior()));
             }
         }
+    }
+
+    public void mostrarCallesConDemora() {
+        grafoVial.mostrarCallesConDemora();
     }
 
     public void mostrarHistorial() {

@@ -123,8 +123,30 @@ public class GrafoVial implements IGrafoVial {
     public boolean registrarDemoraEnCalle(String origenId, String destinoId, int demoraExtraMinutos) {
         Calle calle = buscarCalle(origenId, destinoId);
         if (calle == null || demoraExtraMinutos < 0) return false;
+        if (demoraExtraMinutos == 0 && calle.getDemoraExtraMinutos() == 0) {
+            return false; // ← no hay demora que cancelar
+        }
         calle.setDemoraExtraMinutos(demoraExtraMinutos);
         return true;
+    }
+
+    public void mostrarCallesConDemora() {
+        boolean hayDemoras = false;
+        Nodo<Interseccion> auxI = intersecciones.getCabeza();
+        while (auxI != null) {
+            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
+            while (auxC != null) {
+                if (auxC.dato.getDemoraExtraMinutos() > 0) {
+                    System.out.println("  " + auxC.dato.getNombre() +
+                            " (" + auxC.dato.getOrigenId() + "→" + auxC.dato.getDestinoId() + ")" +
+                            " | Demora: +" + auxC.dato.getDemoraExtraMinutos() + " min");
+                    hayDemoras = true;
+                }
+                auxC = auxC.siguiente;
+            }
+            auxI = auxI.siguiente;
+        }
+        if (!hayDemoras) System.out.println("  No hay demoras registradas.");
     }
 
     @Override

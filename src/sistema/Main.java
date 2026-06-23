@@ -304,16 +304,52 @@ public class Main {
     }
 
     private static void registrarDemora() {
-        System.out.println("\nIntersecciones disponibles:");
-        sistema.mostrarIntersecciones();
-        String origenId  = pedirInterseccion("intersección origen de la calle");
+        System.out.println("\nDemoras activas:");
+        sistema.mostrarCallesConDemora();
+
+        System.out.println("\n1. Registrar demora");
+        System.out.println("2. Cancelar demora");
+        System.out.println("0. Volver");
+        System.out.print("Seleccione: ");
+        int opcion = leerEntero();
+        if (opcion == 0) return;
+        if (opcion != 1 && opcion != 2) {
+            System.out.println("Opción inválida.");
+            return;
+        }
+
+        System.out.println("\n¿Desde qué intersección sale la calle?");
+        String origenId = seleccionarInterseccion();
         if (origenId == null) return;
-        String destinoId = pedirInterseccion("intersección destino de la calle");
+
+        System.out.println("\n¿A qué intersección llega la calle?");
+        String destinoId = seleccionarInterseccion();
         if (destinoId == null) return;
-        int minutos = leerEnteroPositivo("Minutos de demora extra: ");
+
+        if (origenId.equals(destinoId)) {
+            System.out.println("Origen y destino no pueden ser iguales.");
+            return;
+        }
+
+        if (opcion == 2) {
+            boolean resultado = sistema.registrarDemoraEnCalle(origenId, destinoId, 0);
+            System.out.println(resultado
+                    ? "Demora cancelada. Calle vuelve a tiempo normal."
+                    : "No había demora registrada en esa calle.");
+            return;
+        }
+
+        System.out.print("Minutos de demora extra: ");
+        int minutos = leerEntero();
+        if (minutos <= 0) {
+            System.out.println("Ingrese un número mayor a 0.");
+            return;
+        }
 
         boolean resultado = sistema.registrarDemoraEnCalle(origenId, destinoId, minutos);
-        System.out.println(resultado ? "Demora registrada." : "No se encontró esa calle.");
+        System.out.println(resultado
+                ? "Demora de " + minutos + " min registrada. Afecta cálculo de ruta más rápida."
+                : "No existe calle entre esas intersecciones.");
     }
 
     private static void atenderEmergencia() {
@@ -486,9 +522,9 @@ public class Main {
         System.out.println("  I4: Rivadavia y Lavalle");
         System.out.println("  I5: Corrientes y San Martín");
         System.out.println("  I6: Corrientes y Lavalle");
+        System.out.println("  I7: Mitre y San Martín");
         System.out.println();
-        System.out.println("Calles: Rivadavia | Belgrano | San Martín | Lavalle | Corrientes | Autopista");
-    }
+        System.out.println("Calles: Rivadavia | Belgrano | San Martín | Lavalle | Corrientes | Autopista | Mitre");    }
 
     // ===== UTILIDADES =====
 
