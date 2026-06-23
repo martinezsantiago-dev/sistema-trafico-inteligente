@@ -18,49 +18,6 @@ public class Vehiculo {
         this.interseccionActual = null;
     }
 
-    public String getPatente() {
-        return patente;
-    }
-
-    public void setPatente(String patente) {
-        this.patente = patente;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
-    public String getDestino() {
-        return destino;
-    }
-
-    public void setDestino(String destino) {
-        this.destino = destino;
-    }
-
-    public long getTimestampLlegada() {
-        return timestampLlegada;
-    }
-
-    public void setTimestampLlegada(long timestampLlegada) {
-        this.timestampLlegada = timestampLlegada;
-    }
-
-    public double getVelocidad() {
-        return velocidad;
-    }
-
-    public void setVelocidad(double velocidad) {
-        this.velocidad = velocidad;
-    }
-
-    public String getInterseccionActual() {
-        return interseccionActual;
-    }
 
     public void setInterseccionActual(String interseccionActual) {
         this.interseccionActual = interseccionActual;

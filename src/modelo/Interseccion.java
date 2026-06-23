@@ -48,9 +48,6 @@ public class Interseccion {
         return zona;
     }
 
-    public void mostrarVehiculos() {
-        colaVehiculos.mostrar();
-    }
 
     @Override
     public String toString() {

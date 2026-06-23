@@ -3,16 +3,12 @@ package modelo;
 public class Camara extends Dispositivo {
 
     private String tipo;
-    private int vehiculosDetectados;
-    private double velocidadPromedio;
    //  private String interseccion;
 
     public Camara(String id, Direccion ubicacion, String interseccion, String tipo) {
         super(id, ubicacion, interseccion);
         // this.interseccion = interseccion;
         this.tipo = tipo;
-        this.vehiculosDetectados = 0;
-        this.velocidadPromedio = 0.0;
     }
 
     public String getTipo() {
@@ -21,22 +17,6 @@ public class Camara extends Dispositivo {
 
     public void setTipo(String tipo) {
         this.tipo = tipo;
-    }
-
-    public int getVehiculosDetectados() {
-        return vehiculosDetectados;
-    }
-
-    public void setVehiculosDetectados(int vehiculosDetectados) {
-        this.vehiculosDetectados = vehiculosDetectados;
-    }
-
-    public double getVelocidadPromedio() {
-        return velocidadPromedio;
-    }
-
-    public void setVelocidadPromedio(double velocidadPromedio) {
-        this.velocidadPromedio = velocidadPromedio;
     }
 
     @Override

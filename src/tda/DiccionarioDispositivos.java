@@ -115,21 +115,6 @@ public class DiccionarioDispositivos implements IDiccionarioDispositivos {
         return true;
     }
 
-    public boolean modificarDispositivo(String clave, Dispositivo nuevoDispositivo) {
-        if (nuevoDispositivo == null) {
-            return false;
-        }
-
-        EntradaDiccionario entrada = buscarEntrada(clave);
-
-        if (entrada == null) {
-            return false;
-        }
-
-        entrada.valor = nuevoDispositivo;
-        return true;
-    }
-
     public boolean eliminar(String clave) {
         if (clave == null) {
             return false;
@@ -141,7 +126,7 @@ public class DiccionarioDispositivos implements IDiccionarioDispositivos {
         EntradaDiccionario anterior = null;
 
         while (actual != null) {
-            if (actual.clave.equals(clave)) {
+            if (actual.clave.equalsIgnoreCase(clave)) {
 
                 if (anterior == null) {
                     tabla[posicion] = actual.siguiente;
@@ -186,41 +171,6 @@ public class DiccionarioDispositivos implements IDiccionarioDispositivos {
         return encontrados;
     }
 
-    public void listarClaves() {
-        if (cantidad == 0) {
-            System.out.println("No hay claves cargadas");
-            return;
-        }
-
-        System.out.println("Claves del diccionario:");
-
-        for (int i = 0; i < capacidad; i++) {
-            EntradaDiccionario actual = tabla[i];
-
-            while (actual != null) {
-                System.out.println(actual.clave);
-                actual = actual.siguiente;
-            }
-        }
-    }
-
-    public void listarValores() {
-        if (cantidad == 0) {
-            System.out.println("No hay dispositivos cargados");
-            return;
-        }
-
-        System.out.println("Dispositivos del diccionario:");
-
-        for (int i = 0; i < capacidad; i++) {
-            EntradaDiccionario actual = tabla[i];
-
-            while (actual != null) {
-                System.out.println(actual.valor);
-                actual = actual.siguiente;
-            }
-        }
-    }
 
     public boolean estaVacio() {
         return cantidad == 0;

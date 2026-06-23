@@ -121,9 +121,8 @@ public class Main {
     // ===== ACCIONES CIUDADANO =====
 
     private static void reportarEmergencia() {
-        sistema.mostrarIntersecciones();
-
-        String interseccionId = pedirInterseccion("intersección afectada");
+        System.out.println("\n¿En qué intersección ocurrió el incidente?");
+        String interseccionId = seleccionarInterseccion();
         if (interseccionId == null) return;
 
         // Obtener zona desde la intersección
@@ -340,11 +339,17 @@ public class Main {
             return;
         }
 
+ 
         if (opcion == 2) {
-            boolean resultado = sistema.registrarDemoraEnCalle(origenId, destinoId, 0);
-            System.out.println(resultado
-                    ? "Demora cancelada. Calle vuelve a tiempo normal."
-                    : "No existe calle entre esas intersecciones.");
+            int demoraActual = sistema.getDemoraEnCalle(origenId, destinoId);
+            if (demoraActual < 0) {
+                System.out.println("No existe calle entre esas intersecciones.");
+            } else if (demoraActual == 0) {
+                System.out.println("La calle no tiene demora activa.");
+            } else {
+                sistema.registrarDemoraEnCalle(origenId, destinoId, 0);
+                System.out.println("Demora cancelada. Calle vuelve a tiempo normal.");
+            }
             return;
         }
 
@@ -372,71 +377,6 @@ public class Main {
         String confirmar = leerTexto("¿Atender la más prioritaria? (s/n): ");
         if (confirmar.equalsIgnoreCase("s")) sistema.atenderEmergencia();
         else System.out.println("Operación cancelada.");
-    }
-
-    /*
-     * El usuario puede ingresar:
-     *   - Nombre de calle (ej: "santa fe")  → se resuelve a ID
-     *   - ID directamente (ej: "I1")        → se usa directo
-     * En ambos casos se acepta cualquier capitalización.
-     */
-    private static String pedirInterseccion(String contexto) {
-        System.out.println("Ingrese nombre de calle, nombre del cruce o ID de la " + contexto + ":");
-        System.out.print("> ");
-        String entrada = scanner.nextLine().trim();
-
-        if (entrada.isEmpty()) {
-            System.out.println("Entrada vacía, operación cancelada.");
-            return null;
-        }
-
-        // Primero verifica si es un nombre de calle con múltiples intersecciones
-        ListaEnlazada<String> coincidencias = sistema.buscarInterseccionesPorCalle(entrada);
-
-        if (!coincidencias.estaVacia() && coincidencias.tamanio() > 1) {
-            // Hay ambigüedad — pregunta cuál
-            System.out.println("La calle '" + entrada + "' pasa por varias intersecciones:");
-            int numero = 1;
-            Nodo<String> aux = coincidencias.getCabeza();
-            while (aux != null) {
-                String nombre = sistema.getNombreInterseccion(aux.dato);
-                System.out.println("  " + numero + ". " + aux.dato + " (" + nombre + ")");
-                numero++;
-                aux = aux.siguiente;
-            }
-
-            int eleccion = 0;
-            while (eleccion < 1 || eleccion > coincidencias.tamanio()) {
-                System.out.print("Seleccione (1-" + coincidencias.tamanio() + "): ");
-                eleccion = leerEntero();
-                if (eleccion < 1 || eleccion > coincidencias.tamanio())
-                    System.out.println("Opción inválida.");
-            }
-
-            // Obtiene el ID elegido
-            aux = coincidencias.getCabeza();
-            for (int i = 1; i < eleccion; i++) aux = aux.siguiente;
-            String id = aux.dato;
-            System.out.println("  → " + id);
-            return id;
-        }
-
-        if (!coincidencias.estaVacia()) {
-            // Solo una intersección con ese nombre de calle
-            String id = coincidencias.getCabeza().dato;
-            System.out.println("  → " + id);
-            return id;
-        }
-
-        // Si no encontró por calle, intenta por nombre de intersección o ID
-        String id = sistema.resolverEntradaInterseccion(entrada);
-        if (id == null) {
-            System.out.println("No se encontró ninguna intersección para: " + entrada);
-            return null;
-        }
-
-        System.out.println("  → " + id);
-        return id;
     }
 
     // ===== DATOS INICIALES =====

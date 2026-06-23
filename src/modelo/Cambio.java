@@ -41,10 +41,5 @@ public class Cambio {
         return entidad + " " + idEntidad +
                 " | " + atributo + ": " + valorAnterior + " -> " + valorNuevo;
     }
-    // qué entidad era       -> Semaforo / Camara
-    // qué código tenía      -> S1 / C3
-    // qué atributo cambió   -> estado
-    // valor anterior        -> ACTIVO
-    // valor nuevo           -> FUERA_DE_SERVICIO
 
 }

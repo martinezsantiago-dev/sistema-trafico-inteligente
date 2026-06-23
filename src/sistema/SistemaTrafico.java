@@ -89,16 +89,6 @@ public class SistemaTrafico {
                 alturaOrigen, alturaDestino, distanciaMetros, tiempoMinutos, dobleMano);
     }
 
-    // Resuelve nombre de calle a ID de intersección
-    public String resolverInterseccion(String nombreCalle, int altura) {
-        return grafoVial.obtenerInterseccionCercana(nombreCalle, altura);
-    }
-
-    // Para cuando el usuario informa nombre de calle sin altura
-    public String resolverInterseccionPorCalle(String nombreCalle) {
-        return grafoVial.obtenerInterseccionPorNombreCalle(nombreCalle);
-    }
-
     public boolean bloquearCallePorNombre(String nombreCalle) {
         boolean resultado = grafoVial.bloquearCallePorNombre(nombreCalle);
         if (resultado) {
@@ -179,10 +169,6 @@ public class SistemaTrafico {
         System.out.println("Vehículo registrado: " + patente + " (" + tipo + ")");
     }
 
-    public boolean tieneVehiculo() {
-        return vehiculoCiudadano != null;
-    }
-
     public String getInterseccionActualCiudadano() {
         return interseccionActualCiudadano;
     }
@@ -200,9 +186,6 @@ public class SistemaTrafico {
         System.out.println("Esta intersección será usada como origen en la próxima consulta.");
     }
 
-    public void limpiarPosicionActual() {
-        interseccionActualCiudadano = null;
-    }
 
     // ===== EMERGENCIAS =====
 
@@ -319,16 +302,16 @@ public class SistemaTrafico {
         }
     }
 
+    public int getDemoraEnCalle(String origenId, String destinoId) {
+        return grafoVial.getDemoraEnCalle(origenId, destinoId);
+    }
+
     public void mostrarCallesConDemora() {
         grafoVial.mostrarCallesConDemora();
     }
 
     public void mostrarHistorial() {
         historialCambios.mostrar();
-    }
-
-    public String normalizarIdInterseccion(String id) {
-        return grafoVial.normalizarId(id);
     }
 
 

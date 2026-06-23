@@ -48,19 +48,6 @@ public class GrafoVial implements IGrafoVial {
         return null;
     }
 
-    // Busca intersecciones cuyo NOMBRE contenga el texto ingresado
-    public Interseccion buscarInterseccionPorNombre(String nombre) {
-        if (nombre == null) return null;
-        Nodo<Interseccion> aux = intersecciones.getCabeza();
-        while (aux != null) {
-            if (aux.dato.getNombre().toLowerCase().contains(nombre.toLowerCase())) {
-                return aux.dato;
-            }
-            aux = aux.siguiente;
-        }
-        return null;
-    }
-
     @Override
     public boolean agregarCalle(String origenId, String destinoId, String nombreCalle,
                                 int alturaOrigen, int alturaDestino,
@@ -243,23 +230,6 @@ public class GrafoVial implements IGrafoVial {
             while (auxC != null) {
                 if (auxC.dato.contieneAltura(calle, altura)) {
                     return auxC.dato.obtenerInterseccionMasCercana(altura);
-                }
-                auxC = auxC.siguiente;
-            }
-            auxI = auxI.siguiente;
-        }
-        return null;
-    }
-
-    // Resuelve solo por nombre de calle, sin altura — devuelve la primera intersección que la contiene
-    public String obtenerInterseccionPorNombreCalle(String nombreCalle) {
-        if (nombreCalle == null) return null;
-        Nodo<Interseccion> auxI = intersecciones.getCabeza();
-        while (auxI != null) {
-            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
-            while (auxC != null) {
-                if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle)) {
-                    return auxI.dato.getId();
                 }
                 auxC = auxC.siguiente;
             }
@@ -563,9 +533,15 @@ public class GrafoVial implements IGrafoVial {
 
         Nodo<Interseccion> auxI = intersecciones.getCabeza();
         while (auxI != null) {
-            // Busca en el NOMBRE de la intersección
-            if (auxI.dato.getNombre().toLowerCase().contains(nombreCalle.toLowerCase())) {
-                resultado.insertarFinal(auxI.dato.getId());
+            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
+            while (auxC != null) {
+                if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle)) {
+                    String origenId = auxI.dato.getId();
+                    if (!resultado.buscar(origenId)) resultado.insertarFinal(origenId);
+                    String destinoId = auxC.dato.getDestinoId();
+                    if (!resultado.buscar(destinoId)) resultado.insertarFinal(destinoId);
+                }
+                auxC = auxC.siguiente;
             }
             auxI = auxI.siguiente;
         }
