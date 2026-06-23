@@ -4,6 +4,7 @@ import modelo.*;
 import java.util.Scanner;
 import tda.ListaEnlazada;
 import tda.Nodo;
+import modelo.Interseccion;
 
 public class Main {
 
@@ -135,31 +136,18 @@ public class Main {
     }
 
     private static void calcularRuta(String tipo) {
-        System.out.println("\nCalles disponibles:");
-        sistema.mostrarCallesDisponibles();
-        System.out.println("\nIntersecciones disponibles:");
-        sistema.mostrarIntersecciones();
+        System.out.println("\n¿Desde dónde salís?");
+        String origenId = seleccionarInterseccion();
+        if (origenId == null) return;
 
-        String origenId;
-
-        // Si tiene posición registrada, ofrece usarla como origen
-        if (sistema.getInterseccionActualCiudadano() != null) {
-            System.out.println("\nTiene una posición registrada. ¿Desea usarla como origen? (s/n)");
-            System.out.print("> ");
-            String resp = scanner.nextLine().trim();
-            if (resp.equalsIgnoreCase("s")) {
-                origenId = sistema.getInterseccionActualCiudadano();
-            } else {
-                origenId = pedirInterseccion("origen");
-                if (origenId == null) return;
-            }
-        } else {
-            origenId = pedirInterseccion("origen");
-            if (origenId == null) return;
-        }
-
-        String destinoId = pedirInterseccion("destino");
+        System.out.println("\n¿A dónde vas?");
+        String destinoId = seleccionarInterseccion();
         if (destinoId == null) return;
+
+        if (origenId.equals(destinoId)) {
+            System.out.println("Origen y destino son iguales.");
+            return;
+        }
 
         boolean exito;
         switch (tipo) {
@@ -168,16 +156,44 @@ public class Main {
             default:       exito = sistema.calcularRutaMasCorta(origenId, destinoId); break;
         }
 
-        // Si calculó la ruta, ofrece guardar el destino como posición futura
         if (exito) {
-            System.out.println("\n¿Desea registrar el destino como su posición al llegar? (s/n)");
+            System.out.println("\n¿Registrar destino como tu posición al llegar? (s/n)");
             System.out.print("> ");
-            String resp = scanner.nextLine().trim();
-            if (resp.equalsIgnoreCase("s")) {
+            if (scanner.nextLine().trim().equalsIgnoreCase("s")) {
                 sistema.informarLlegadaADestino(destinoId);
             }
         }
     }
+
+    private static String seleccionarInterseccion() {
+        String posActual = sistema.getInterseccionActualCiudadano();
+
+        ListaEnlazada<Interseccion> lista = sistema.getIntersecciones();
+        ListaEnlazada<String> ids = new ListaEnlazada<>();
+
+        int numero = 1;
+        Nodo<Interseccion> aux = lista.getCabeza();
+        while (aux != null) {
+            String marcador = aux.dato.getId().equals(posActual) ? " ← posición actual" : "";
+            System.out.println("  " + numero + ". " + aux.dato.getNombre() + marcador);
+            ids.insertarFinal(aux.dato.getId());
+            numero++;
+            aux = aux.siguiente;
+        }
+
+        int eleccion = 0;
+        while (eleccion < 1 || eleccion > ids.tamanio()) {
+            System.out.print("Seleccione (1-" + ids.tamanio() + "): ");
+            eleccion = leerEntero();
+            if (eleccion < 1 || eleccion > ids.tamanio())
+                System.out.println("Opción inválida.");
+        }
+
+        Nodo<String> nodo = ids.getCabeza();
+        for (int i = 1; i < eleccion; i++) nodo = nodo.siguiente;
+        return nodo.dato;
+    }
+
 
     private static void informarLlegada() {
         System.out.println("\nIntersecciones disponibles:");
@@ -404,36 +420,40 @@ public class Main {
 
         // ===== INTERSECCIONES =====
         //         ID    Nombre del cruce
+// ===== INTERSECCIONES =====
         sistema.agregarInterseccion(new Interseccion("I1", "Rivadavia y Belgrano", "Zona Centro"));
         sistema.agregarInterseccion(new Interseccion("I2", "Rivadavia y San Martín", "Zona Centro"));
         sistema.agregarInterseccion(new Interseccion("I3", "Belgrano y San Martín", "Zona Norte"));
         sistema.agregarInterseccion(new Interseccion("I4", "Rivadavia y Lavalle", "Zona Sur"));
         sistema.agregarInterseccion(new Interseccion("I5", "Corrientes y San Martín", "Zona Norte"));
         sistema.agregarInterseccion(new Interseccion("I6", "Corrientes y Lavalle", "Zona Sur"));
+        sistema.agregarInterseccion(new Interseccion("I7", "Mitre y San Martín", "Zona Norte"));
 
-        // ===== CALLES =====
-        // agregarCalle(origen, destino, nombre, altOrigen, altDestino, metros, minutos, dobleMano)
+// ===== CALLES =====
+// Rivadavia: rápida pero larga en metros
+        sistema.agregarCalle("I1", "I2", "Rivadavia",   1200, 1800, 2000, 2, false);
 
-        // Rivadavia: solo ida oeste→este (I1 → I2), NO vuelta
-        sistema.agregarCalle("I1", "I2", "Rivadavia", 1200, 1800, 600, 6, false);
+// Belgrano: lenta y corta
+        sistema.agregarCalle("I1", "I4", "Belgrano",    2400, 2000,  300, 9, true);
 
-        // Belgrano: doble mano entre I1 e I4
-        sistema.agregarCalle("I1", "I4", "Belgrano",  2400, 2000, 400, 4, true);
+// San Martín: doble mano
+        sistema.agregarCalle("I2", "I5", "San Martín",  1800, 1400,  400, 4, true);
 
-        // Belgrano norte: solo ida I1 → I3 (contramano respecto a I4→I1)
-        sistema.agregarCalle("I1", "I3", "Belgrano",  2400, 2800, 500, 5, false);
+// San Martín norte
+        sistema.agregarCalle("I2", "I3", "San Martín",  1800, 2200,  350, 3, false);
 
-        // San Martín: doble mano entre I2 e I5
-        sistema.agregarCalle("I2", "I5", "San Martín", 1800, 1400, 300, 3, true);
+// Lavalle: muchos metros, rápida
+        sistema.agregarCalle("I6", "I4", "Lavalle",     1000, 1400, 3000, 2, false);
 
-        // San Martín norte: solo ida I2 → I3
-        sistema.agregarCalle("I2", "I3", "San Martín", 1800, 2200, 400, 4, false);
+// Corrientes
+        sistema.agregarCalle("I6", "I5", "Corrientes",   800, 1200,  500, 5, false);
 
-        // Lavalle: solo ida este→oeste (I6 → I4), NO vuelta — contramano de Rivadavia
-        sistema.agregarCalle("I6", "I4", "Lavalle",   1000, 1400, 700, 8, false);
+// Atajo directo I1->I5: 1 solo tramo, tiempo medio, distancia enorme
+        sistema.agregarCalle("I1", "I5", "Autopista",    100,  200, 8000, 6, false);
 
-        // Corrientes: solo ida oeste→este (I6 → I5)
-        sistema.agregarCalle("I6", "I5", "Corrientes", 800, 1200, 450, 4, false);
+// Mitre: conecta I3 con I7, pocos metros
+        sistema.agregarCalle("I3", "I7", "Mitre",       2800, 3200,  100, 8, false);
+        sistema.agregarCalle("I7", "I5", "Mitre",       3200, 1400,  150, 9, false);
 
         // ===== SEMÁFOROS =====
         sistema.registrarSemaforo(new Semaforo("S1",
@@ -467,7 +487,7 @@ public class Main {
         System.out.println("  I5: Corrientes y San Martín");
         System.out.println("  I6: Corrientes y Lavalle");
         System.out.println();
-        System.out.println("Calles: Rivadavia | Belgrano | San Martín | Lavalle | Corrientes");
+        System.out.println("Calles: Rivadavia | Belgrano | San Martín | Lavalle | Corrientes | Autopista");
     }
 
     // ===== UTILIDADES =====

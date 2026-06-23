@@ -15,6 +15,10 @@ public class GrafoVial implements IGrafoVial {
         this.intersecciones = new ListaEnlazada<>();
     }
 
+    public ListaEnlazada<Interseccion> getIntersecciones() {
+        return intersecciones;
+    }
+
     @Override
     public boolean estaVacio() {
         return intersecciones.estaVacia();
@@ -245,6 +249,7 @@ public class GrafoVial implements IGrafoVial {
     public boolean mostrarRutaMasRapida(String origenId, String destinoId) {
         return calcularRutaMenorCosto(origenId, destinoId, "TIEMPO");
     }
+
 
     @Override
     public boolean mostrarRutaMasCorta(String origenId, String destinoId) {

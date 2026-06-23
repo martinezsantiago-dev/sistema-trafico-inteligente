@@ -247,6 +247,9 @@ public class SistemaTrafico {
         return grafoVial.getNombreRealCalle(nombreCalle);
     }
 
+    public ListaEnlazada<Interseccion> getIntersecciones() {
+        return grafoVial.getIntersecciones();
+    }
 
     public int cantidadSemaforos() {
         return dispositivos.contarPorTipo("Semaforo");
