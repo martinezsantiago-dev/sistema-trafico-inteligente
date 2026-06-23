@@ -130,6 +130,12 @@ public class GrafoVial implements IGrafoVial {
         return true;
     }
 
+    public int getDemoraEnCalle(String origenId, String destinoId) {
+        Calle calle = buscarCalle(origenId, destinoId);
+        if (calle == null) return -1;
+        return calle.getDemoraExtraMinutos();
+    }
+
     public void mostrarCallesConDemora() {
         boolean hayDemoras = false;
         Nodo<Interseccion> auxI = intersecciones.getCabeza();
@@ -506,13 +512,10 @@ public class GrafoVial implements IGrafoVial {
             Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
             while (auxC != null) {
                 if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle)) {
-                    if (auxC.dato.isBloqueada()) {          // ← agregás esto
-                        System.out.println("La calle '" + nombreCalle + "' ya estaba bloqueada.");
-                        return true;
-                    }
-                    auxC.dato.setBloqueada(true);
-                    System.out.println("Calle '" + auxC.dato.getNombre() + "' bloqueada.");
                     encontro = true;
+                    if (!auxC.dato.isBloqueada()) {
+                        auxC.dato.setBloqueada(true);
+                    }
                 }
                 auxC = auxC.siguiente;
             }
@@ -530,13 +533,9 @@ public class GrafoVial implements IGrafoVial {
             while (auxC != null) {
                 if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle)) {
                     encontro = true;
-                    if (!auxC.dato.isBloqueada()) {
-                        System.out.println("La calle '" + nombreCalle + "' ya estaba desbloqueada.");
-                        return true; // ← true, se encontró, solo que ya estaba libre
+                    if (auxC.dato.isBloqueada()) {
+                        auxC.dato.setBloqueada(false);
                     }
-                    auxC.dato.setBloqueada(false);
-                    System.out.println("Calle '" + auxC.dato.getNombre() + "' desbloqueada.");
-                    encontro = true;
                 }
                 auxC = auxC.siguiente;
             }

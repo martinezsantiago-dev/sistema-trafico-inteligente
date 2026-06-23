@@ -96,11 +96,19 @@ public class SistemaTrafico {
     }
 
     public boolean bloquearCallePorNombre(String nombreCalle) {
-        return grafoVial.bloquearCallePorNombre(nombreCalle);
+        boolean resultado = grafoVial.bloquearCallePorNombre(nombreCalle);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle", nombreCalle, "bloqueadaNombre", "false", "true"));
+        }
+        return resultado;
     }
 
     public boolean desbloquearCallePorNombre(String nombreCalle) {
-        return grafoVial.desbloquearCallePorNombre(nombreCalle);
+        boolean resultado = grafoVial.desbloquearCallePorNombre(nombreCalle);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle", nombreCalle, "bloqueadaNombre", "true", "false"));
+        }
+        return resultado;
     }
 
     public boolean existeInterseccion(String id) {
@@ -138,10 +146,12 @@ public class SistemaTrafico {
     }
 
     public boolean registrarDemoraEnCalle(String origenId, String destinoId, int minutos) {
+        int demoraAnterior = grafoVial.getDemoraEnCalle(origenId, destinoId);
         boolean resultado = grafoVial.registrarDemoraEnCalle(origenId, destinoId, minutos);
-        if (resultado && minutos > 0) {
+        if (resultado) {
             historialCambios.apilar(new Cambio("Calle",
-                    origenId + "-" + destinoId, "demora", "0", String.valueOf(minutos)));
+                    origenId + "-" + destinoId, "demora",
+                    String.valueOf(Math.max(demoraAnterior, 0)), String.valueOf(minutos)));
         }
         return resultado;
     }
@@ -194,6 +204,9 @@ public class SistemaTrafico {
 
     public void reportarEmergencia(Emergencia emergencia) {
         colaEmergencias.insertar(emergencia);
+        if (emergencia.getZona() != null) {
+            arbolTerritorial.incrementarIncidentes(emergencia.getZona());
+        }
         System.out.println("Emergencia registrada: " + emergencia);
     }
 
@@ -283,6 +296,14 @@ public class SistemaTrafico {
                 } else {
                     grafoVial.desbloquearCalle(partes[0], partes[1]);
                 }
+            }
+
+        } else if (cambio.getAtributo().equals("bloqueadaNombre")) {
+            boolean valorAnterior = Boolean.parseBoolean(cambio.getValorAnterior());
+            if (valorAnterior) {
+                grafoVial.bloquearCallePorNombre(cambio.getIdEntidad());
+            } else {
+                grafoVial.desbloquearCallePorNombre(cambio.getIdEntidad());
             }
 
         } else if (cambio.getAtributo().equals("demora")) {
