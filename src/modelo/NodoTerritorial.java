@@ -40,14 +40,6 @@ public class NodoTerritorial {
         return hijos;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
     @Override
     public String toString() {
         return tipo + ": " + nombre + " | Incidentes: " + cantidadIncidentes;

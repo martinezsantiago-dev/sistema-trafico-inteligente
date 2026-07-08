@@ -36,6 +36,11 @@ public class PilaHistorial<T> implements IPilaHistorial<T> {
         return datoEliminado;
     }
 
+    // Acceso de solo lectura al nodo tope, para recorrer el historial sin desapilar
+    public Nodo<T> getTope() {
+        return tope;
+    }
+
     @Override
     public T tope() {
         if (estaVacia()) {

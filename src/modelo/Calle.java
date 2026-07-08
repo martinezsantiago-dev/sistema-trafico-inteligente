@@ -14,6 +14,7 @@ import java.text.Normalizer;
         private int distanciaMetros; // PESO DE LA CALLE POR SI QUIERO CALCULAR LA RUTA MAS CORTA POR DISTANCIA
         private int tiempoBaseMinutos; // tiempo normal que se tarda en recorrer esa calle sin demoras
         private int demoraExtraMinutos; // para representar retrasos por accidentes
+        private long timestampDemora; // momento en que se registró la demora actual, para saber qué tan vieja es
         private boolean bloqueada; // indica si la calle esta bloqueada
 
         public Calle(String origenId, String destinoId, String nombre,
@@ -63,12 +64,17 @@ import java.text.Normalizer;
             return demoraExtraMinutos;
         }
 
+        public long getTimestampDemora() {
+            return timestampDemora;
+        }
+
         public boolean isBloqueada() {
             return bloqueada;
         }
 
         public void setDemoraExtraMinutos(int demoraExtraMinutos) {
             this.demoraExtraMinutos = demoraExtraMinutos;
+            this.timestampDemora = demoraExtraMinutos > 0 ? System.currentTimeMillis() : 0;
         }
 
         public void setBloqueada(boolean bloqueada) {
@@ -79,45 +85,11 @@ import java.text.Normalizer;
             return tiempoBaseMinutos + demoraExtraMinutos;
         }
 
-        public boolean contieneAltura(String calleBuscada, int altura) {
-            if (calleBuscada == null) {
-                return false;
-            }
-
-            if (!normalizar(nombre).equals(normalizar(calleBuscada))) {
-                return false;
-            }
-
-            int menor;
-            int mayor;
-
-            if (alturaOrigen < alturaDestino) {
-                menor = alturaOrigen;
-                mayor = alturaDestino;
-            } else {
-                menor = alturaDestino;
-                mayor = alturaOrigen;
-            }
-
-            return altura >= menor && altura <= mayor;
-        }
-
-        private static String normalizar(String texto) {
+        public static String normalizar(String texto) {
             if (texto == null) return "";
-            String sinAcentos = Normalizer.normalize(texto, Normalizer.Form.NFD)
-                    .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+            String sinAcentos = Normalizer.normalize(texto, Normalizer.Form.NFD) // Descompone cada letra con tilde en dos caracteres separados. Ejemplo San Martín
+                    .replaceAll("\\p{InCombiningDiacriticalMarks}", "");  // Busca esos acentos que quedaron sueltos del paso anterior, y los borra. Ahora queda solo la i.
             return sinAcentos.toUpperCase().trim();
-        }
-
-        public String obtenerInterseccionMasCercana(int altura) {
-            int distanciaAlOrigen = Math.abs(altura - alturaOrigen);
-            int distanciaAlDestino = Math.abs(altura - alturaDestino);
-
-            if (distanciaAlOrigen <= distanciaAlDestino) {
-                return origenId;
-            } else {
-                return destinoId;
-            }
         }
 
         @Override

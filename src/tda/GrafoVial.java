@@ -91,22 +91,6 @@ public class GrafoVial implements IGrafoVial {
     }
 
     @Override
-    public boolean bloquearCalle(String origenId, String destinoId) {
-        Calle calle = buscarCalle(origenId, destinoId);
-        if (calle == null) return false;
-        calle.setBloqueada(true);
-        return true;
-    }
-
-    @Override
-    public boolean desbloquearCalle(String origenId, String destinoId) {
-        Calle calle = buscarCalle(origenId, destinoId);
-        if (calle == null) return false;
-        calle.setBloqueada(false);
-        return true;
-    }
-
-    @Override
     public boolean registrarDemoraEnCalle(String origenId, String destinoId, int demoraExtraMinutos) {
         Calle calle = buscarCalle(origenId, destinoId);
         if (calle == null || demoraExtraMinutos < 0) return false;
@@ -123,6 +107,10 @@ public class GrafoVial implements IGrafoVial {
         return calle.getDemoraExtraMinutos();
     }
 
+    private long minutosDesde(long timestamp) {
+        return (System.currentTimeMillis() - timestamp) / 60000;
+    }
+
     public void mostrarCallesConDemora() {
         boolean hayDemoras = false;
         Nodo<Interseccion> auxI = intersecciones.getCabeza();
@@ -132,7 +120,8 @@ public class GrafoVial implements IGrafoVial {
                 if (auxC.dato.getDemoraExtraMinutos() > 0) {
                     System.out.println("  " + auxC.dato.getNombre() +
                             " (" + auxC.dato.getOrigenId() + "→" + auxC.dato.getDestinoId() + ")" +
-                            " | Demora: +" + auxC.dato.getDemoraExtraMinutos() + " min");
+                            " | Demora: +" + auxC.dato.getDemoraExtraMinutos() + " min" +
+                            " | Reportada hace " + minutosDesde(auxC.dato.getTimestampDemora()) + " min");
                     hayDemoras = true;
                 }
                 auxC = auxC.siguiente;
@@ -179,6 +168,17 @@ public class GrafoVial implements IGrafoVial {
             return;
         }
         System.out.println("Calles disponibles:");
+        Nodo<String> aux = obtenerNombresCalles().getCabeza();
+        while (aux != null) {
+            String estado = estadoCalle(aux.dato);
+            String tag = estado.equals("LIBRE") ? "" : " [" + estado + "]";
+            System.out.println("  - " + aux.dato + tag);
+            aux = aux.siguiente;
+        }
+    }
+
+    // Nombres de calle únicos, sin repetir por cada tramo/interseccion
+    public ListaEnlazada<String> obtenerNombresCalles() {
         ListaEnlazada<String> nombresVistos = new ListaEnlazada<>();
         Nodo<Interseccion> auxI = intersecciones.getCabeza();
         while (auxI != null) {
@@ -186,13 +186,91 @@ public class GrafoVial implements IGrafoVial {
             while (auxC != null) {
                 String nombre = auxC.dato.getNombre();
                 if (!nombresVistos.buscar(nombre)) {
-                    System.out.println("  - " + nombre);
                     nombresVistos.insertarFinal(nombre);
                 }
                 auxC = auxC.siguiente;
             }
             auxI = auxI.siguiente;
         }
+        return nombresVistos;
+    }
+
+    // Un tramo por cada objeto Calle físico: si es doble mano, I1->I2 e I2->I1
+    // son el mismo tramo y se devuelve una sola vez (la primera arista encontrada).
+    public ListaEnlazada<Calle> obtenerTramosDeCalle(String nombreCalle) {
+        ListaEnlazada<Calle> tramos = new ListaEnlazada<>();
+        Nodo<Interseccion> auxI = intersecciones.getCabeza();
+        while (auxI != null) {
+            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
+            while (auxC != null) {
+                Calle calle = auxC.dato;
+                if (Calle.normalizar(calle.getNombre()).equals(Calle.normalizar(nombreCalle))
+                        && !esTramoYaListado(tramos, calle)) {
+                    tramos.insertarFinal(calle);
+                }
+                auxC = auxC.siguiente;
+            }
+            auxI = auxI.siguiente;
+        }
+        return tramos;
+    }
+
+    private boolean esTramoYaListado(ListaEnlazada<Calle> tramos, Calle calle) {
+        Nodo<Calle> aux = tramos.getCabeza();
+        while (aux != null) {
+            Calle c = aux.dato;
+            boolean mismoSentido = c.getOrigenId().equalsIgnoreCase(calle.getOrigenId())
+                    && c.getDestinoId().equalsIgnoreCase(calle.getDestinoId());
+            boolean sentidoInverso = c.getOrigenId().equalsIgnoreCase(calle.getDestinoId())
+                    && c.getDestinoId().equalsIgnoreCase(calle.getOrigenId());
+            if (mismoSentido || sentidoInverso) return true;
+            aux = aux.siguiente;
+        }
+        return false;
+    }
+
+    public boolean existeTramoInverso(String origenId, String destinoId) {
+        return buscarCalle(destinoId, origenId) != null;
+    }
+
+    public boolean isTramoBloqueado(String origenId, String destinoId) {
+        Calle calle = buscarCalle(origenId, destinoId);
+        return calle != null && calle.isBloqueada();
+    }
+
+    public boolean bloquearTramo(String origenId, String destinoId) {
+        Calle calle = buscarCalle(origenId, destinoId);
+        if (calle == null) return false;
+        calle.setBloqueada(true);
+        return true;
+    }
+
+    public boolean desbloquearTramo(String origenId, String destinoId) {
+        Calle calle = buscarCalle(origenId, destinoId);
+        if (calle == null) return false;
+        calle.setBloqueada(false);
+        return true;
+    }
+
+    // "LIBRE": ningún tramo bloqueado | "PARCIAL": algunos tramos sí y otros no | "BLOQUEADA": todos los tramos
+    public String estadoCalle(String nombreCalle) {
+        boolean algunaBloqueada = false;
+        boolean algunaLibre = false;
+        Nodo<Interseccion> auxI = intersecciones.getCabeza();
+        while (auxI != null) {
+            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
+            while (auxC != null) {
+                if (Calle.normalizar(auxC.dato.getNombre()).equals(Calle.normalizar(nombreCalle))) {
+                    if (auxC.dato.isBloqueada()) algunaBloqueada = true;
+                    else algunaLibre = true;
+                }
+                auxC = auxC.siguiente;
+            }
+            auxI = auxI.siguiente;
+        }
+        if (algunaBloqueada && algunaLibre) return "PARCIAL";
+        if (algunaBloqueada) return "BLOQUEADA";
+        return "LIBRE";
     }
 
     @Override
@@ -218,24 +296,6 @@ public class GrafoVial implements IGrafoVial {
             System.out.println();
             auxI = auxI.siguiente;
         }
-    }
-
-    // Resuelve nombre de calle + altura a ID de intersección
-    @Override
-    public String obtenerInterseccionCercana(String calle, int altura) {
-        if (calle == null) return null;
-        Nodo<Interseccion> auxI = intersecciones.getCabeza();
-        while (auxI != null) {
-            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
-            while (auxC != null) {
-                if (auxC.dato.contieneAltura(calle, altura)) {
-                    return auxC.dato.obtenerInterseccionMasCercana(altura);
-                }
-                auxC = auxC.siguiente;
-            }
-            auxI = auxI.siguiente;
-        }
-        return null;
     }
 
     @Override
@@ -289,7 +349,10 @@ public class GrafoVial implements IGrafoVial {
 
     private boolean calcularRutaBFS(String origenId, String destinoId) {
         int cantidad = intersecciones.tamanio();
-        if (cantidad == 0) { System.out.println("El grafo está vacío"); return false; }
+        if (cantidad == 0) {
+            System.out.println("El grafo está vacío");
+            return false;
+        }
 
         String[] ids = cargarIds();
         int indiceOrigen = obtenerIndice(ids, origenId);
@@ -300,7 +363,7 @@ public class GrafoVial implements IGrafoVial {
             return false;
         }
 
-        boolean[] visitados = new boolean[cantidad];
+        boolean[] visitados = new boolean[cantidad]; // decidir vecino
         String[] anteriores = new String[cantidad];
         ColaFIFO<String> cola = new ColaFIFO<>();
 
@@ -411,8 +474,39 @@ public class GrafoVial implements IGrafoVial {
             System.out.println("Distancia total: " + costos[indiceDestino] + " metros");
         } else {
             System.out.println("Tiempo estimado: " + costos[indiceDestino] + " minutos");
+            mostrarDemorasEnRuta(anteriores, ids, origenId, destinoId);
         }
         return true;
+    }
+
+    // Recorre el camino calculado y avisa si alguno de sus tramos tiene una demora activa que sumó tiempo
+    private void mostrarDemorasEnRuta(String[] anteriores, String[] ids, String origenId, String destinoId) {
+        ListaEnlazada<Calle> tramosConDemora = new ListaEnlazada<>();
+        int totalDemora = 0;
+
+        String actual = destinoId;
+        while (!actual.equalsIgnoreCase(origenId)) {
+            int idx = obtenerIndice(ids, actual);
+            if (idx == -1 || anteriores[idx] == null) return;
+            String anteriorId = anteriores[idx];
+            Calle calle = buscarCalle(anteriorId, actual);
+            if (calle != null && calle.getDemoraExtraMinutos() > 0) {
+                tramosConDemora.insertarFinal(calle);
+                totalDemora += calle.getDemoraExtraMinutos();
+            }
+            actual = anteriorId;
+        }
+
+        if (tramosConDemora.estaVacia()) return;
+
+        System.out.println("Esta ruta se vio afectada por demoras activas:");
+        Nodo<Calle> aux = tramosConDemora.getCabeza();
+        while (aux != null) {
+            Calle c = aux.dato;
+            System.out.println("  - " + c.getNombre() + " (" + c.getOrigenId() + "→" + c.getDestinoId() + "): +" + c.getDemoraExtraMinutos() + " min");
+            aux = aux.siguiente;
+        }
+        System.out.println("Total agregado por demoras: " + totalDemora + " min.");
     }
 
     private int indiceMenorCosto(int[] costos, boolean[] visitados) {
@@ -460,20 +554,6 @@ public class GrafoVial implements IGrafoVial {
         return tramos;
     }
 
-    public String getNombreRealCalle(String nombreCalle) {
-        Nodo<Interseccion> auxI = intersecciones.getCabeza();
-        while (auxI != null) {
-            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
-            while (auxC != null) {
-                if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle))
-                    return auxC.dato.getNombre();
-                auxC = auxC.siguiente;
-            }
-            auxI = auxI.siguiente;
-        }
-        return nombreCalle;
-    }
-
     public boolean bloquearCallePorNombre(String nombreCalle) {
         if (nombreCalle == null) return false;
         boolean encontro = false;
@@ -481,7 +561,7 @@ public class GrafoVial implements IGrafoVial {
         while (auxI != null) {
             Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
             while (auxC != null) {
-                if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle)) {
+                if (Calle.normalizar(auxC.dato.getNombre()).equals(Calle.normalizar(nombreCalle))) {
                     encontro = true;
                     if (!auxC.dato.isBloqueada()) {
                         auxC.dato.setBloqueada(true);
@@ -501,7 +581,7 @@ public class GrafoVial implements IGrafoVial {
         while (auxI != null) {
             Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
             while (auxC != null) {
-                if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle)) {
+                if (Calle.normalizar(auxC.dato.getNombre()).equals(Calle.normalizar(nombreCalle))) {
                     encontro = true;
                     if (auxC.dato.isBloqueada()) {
                         auxC.dato.setBloqueada(false);
@@ -512,68 +592,6 @@ public class GrafoVial implements IGrafoVial {
             auxI = auxI.siguiente;
         }
         return encontro;
-    }
-
-    public String normalizarId(String id) {
-        if (id == null) return null;
-        Nodo<Interseccion> aux = intersecciones.getCabeza();
-        while (aux != null) {
-            if (aux.dato.getId().equalsIgnoreCase(id)) {
-                return aux.dato.getId(); // devuelve "I1" aunque entró "i1"
-            }
-            aux = aux.siguiente;
-        }
-        return null;
-    } // para que el usuario pueda agregar ids en minuscula
-
-
-    public ListaEnlazada<String> buscarInterseccionesPorCalle(String nombreCalle) {
-        ListaEnlazada<String> resultado = new ListaEnlazada<>();
-        if (nombreCalle == null) return resultado;
-
-        Nodo<Interseccion> auxI = intersecciones.getCabeza();
-        while (auxI != null) {
-            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
-            while (auxC != null) {
-                if (auxC.dato.getNombre().equalsIgnoreCase(nombreCalle)) {
-                    String origenId = auxI.dato.getId();
-                    if (!resultado.buscar(origenId)) resultado.insertarFinal(origenId);
-                    String destinoId = auxC.dato.getDestinoId();
-                    if (!resultado.buscar(destinoId)) resultado.insertarFinal(destinoId);
-                }
-                auxC = auxC.siguiente;
-            }
-            auxI = auxI.siguiente;
-        }
-        return resultado;
-    }
-    public String resolverEntrada(String entrada) {
-        if (entrada == null) return null;
-
-        // 1. Por nombre de calle exacto — si hay varias intersecciones lo maneja pedirInterseccion
-        Nodo<Interseccion> auxI = intersecciones.getCabeza();
-        while (auxI != null) {
-            Nodo<Calle> auxC = auxI.dato.getCallesAdyacentes().getCabeza();
-            while (auxC != null) {
-                if (auxC.dato.getNombre().equalsIgnoreCase(entrada)) {
-                    return auxI.dato.getId();
-                }
-                auxC = auxC.siguiente;
-            }
-            auxI = auxI.siguiente;
-        }
-
-        // 2. Por nombre de intersección exacto
-        auxI = intersecciones.getCabeza();
-        while (auxI != null) {
-            if (auxI.dato.getNombre().equalsIgnoreCase(entrada)) {
-                return auxI.dato.getId();
-            }
-            auxI = auxI.siguiente;
-        }
-
-        // 3. Por ID normalizado
-        return normalizarId(entrada);
     }
 
 }

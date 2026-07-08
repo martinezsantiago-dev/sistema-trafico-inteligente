@@ -45,7 +45,7 @@ public class SistemaTrafico {
         if (d == null) return false;
         String anterior = String.valueOf(d.isActivo());
         boolean resultado = dispositivos.modificarActivo(id, true);
-        if (resultado) historialCambios.apilar(new Cambio("Dispositivo", id, "activo", anterior, "true"));
+        if (resultado) historialCambios.apilar(new Cambio("Dispositivo", d.getId(), "activo", anterior, "true"));
         return resultado;
     }
 
@@ -54,7 +54,7 @@ public class SistemaTrafico {
         if (d == null) return false;
         String anterior = String.valueOf(d.isActivo());
         boolean resultado = dispositivos.modificarActivo(id, false);
-        if (resultado) historialCambios.apilar(new Cambio("Dispositivo", id, "activo", anterior, "false"));
+        if (resultado) historialCambios.apilar(new Cambio("Dispositivo", d.getId(), "activo", anterior, "false"));
         return resultado;
     }
 
@@ -64,7 +64,7 @@ public class SistemaTrafico {
         Semaforo semaforo = (Semaforo) d;
         String anterior = semaforo.getEstado().toString();
         semaforo.setEstado(nuevoEstado);
-        historialCambios.apilar(new Cambio("Semaforo", id, "estado", anterior, nuevoEstado.toString()));
+        historialCambios.apilar(new Cambio("Semaforo", d.getId(), "estado", anterior, nuevoEstado.toString()));
         return true;
     }
 
@@ -121,24 +121,6 @@ public class SistemaTrafico {
         return grafoVial.mostrarRutaMasCorta(origenId, destinoId);
     }
 
-    public boolean bloquearCalle(String origenId, String destinoId) {
-        boolean resultado = grafoVial.bloquearCalle(origenId, destinoId);
-        if (resultado) {
-            historialCambios.apilar(new Cambio("Calle",
-                    origenId + "-" + destinoId, "bloqueada", "false", "true"));
-        }
-        return resultado;
-    }
-
-    public boolean desbloquearCalle(String origenId, String destinoId) {
-        boolean resultado = grafoVial.desbloquearCalle(origenId, destinoId);
-        if (resultado) {
-            historialCambios.apilar(new Cambio("Calle",
-                    origenId + "-" + destinoId, "bloqueada", "true", "false"));
-        }
-        return resultado;
-    }
-
     public boolean registrarDemoraEnCalle(String origenId, String destinoId, int minutos) {
         int demoraAnterior = grafoVial.getDemoraEnCalle(origenId, destinoId);
         boolean resultado = grafoVial.registrarDemoraEnCalle(origenId, destinoId, minutos);
@@ -160,6 +142,54 @@ public class SistemaTrafico {
 
     public void mostrarCallesDisponibles() {
         grafoVial.mostrarCallesDisponibles();
+    }
+
+    public ListaEnlazada<String> obtenerNombresCalles() {
+        return grafoVial.obtenerNombresCalles();
+    }
+
+    public String estadoCalle(String nombreCalle) {
+        return grafoVial.estadoCalle(nombreCalle);
+    }
+
+    public ListaEnlazada<Calle> obtenerTramosDeCalle(String nombreCalle) {
+        return grafoVial.obtenerTramosDeCalle(nombreCalle);
+    }
+
+    public boolean esTramoDobleMano(String origenId, String destinoId) {
+        return grafoVial.existeTramoInverso(origenId, destinoId);
+    }
+
+    public boolean isTramoBloqueado(String origenId, String destinoId) {
+        return grafoVial.isTramoBloqueado(origenId, destinoId);
+    }
+
+    public boolean bloquearTramo(String origenId, String destinoId, boolean ambosSentidos) {
+        boolean resultado = grafoVial.bloquearTramo(origenId, destinoId);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle", origenId + "-" + destinoId, "bloqueadaTramo", "false", "true"));
+        }
+        if (ambosSentidos && grafoVial.existeTramoInverso(origenId, destinoId)) {
+            boolean resultadoInverso = grafoVial.bloquearTramo(destinoId, origenId);
+            if (resultadoInverso) {
+                historialCambios.apilar(new Cambio("Calle", destinoId + "-" + origenId, "bloqueadaTramo", "false", "true"));
+            }
+        }
+        return resultado;
+    }
+
+    public boolean desbloquearTramo(String origenId, String destinoId, boolean ambosSentidos) {
+        boolean resultado = grafoVial.desbloquearTramo(origenId, destinoId);
+        if (resultado) {
+            historialCambios.apilar(new Cambio("Calle", origenId + "-" + destinoId, "bloqueadaTramo", "true", "false"));
+        }
+        if (ambosSentidos && grafoVial.existeTramoInverso(origenId, destinoId)) {
+            boolean resultadoInverso = grafoVial.desbloquearTramo(destinoId, origenId);
+            if (resultadoInverso) {
+                historialCambios.apilar(new Cambio("Calle", destinoId + "-" + origenId, "bloqueadaTramo", "true", "false"));
+            }
+        }
+        return resultado;
     }
 
     // ===== SEGUIMIENTO DE VEHÍCULO =====
@@ -219,10 +249,6 @@ public class SistemaTrafico {
         colaEmergencias.mostrar();
     }
 
-    public String getNombreCalle(String nombreCalle) {
-        return grafoVial.getNombreRealCalle(nombreCalle);
-    }
-
     public ListaEnlazada<Interseccion> getIntersecciones() {
         return grafoVial.getIntersecciones();
     }
@@ -233,14 +259,6 @@ public class SistemaTrafico {
 
     public int cantidadCamaras() {
         return dispositivos.contarPorTipo("Camara");
-    }
-
-    public ListaEnlazada<String> buscarInterseccionesPorCalle(String nombreCalle) {
-        return grafoVial.buscarInterseccionesPorCalle(nombreCalle);
-    }
-
-    public String resolverEntradaInterseccion(String entrada) {
-        return grafoVial.resolverEntrada(entrada);
     }
 
     public String getNombreInterseccion(String id) {
@@ -274,23 +292,23 @@ public class SistemaTrafico {
                         Semaforo.Estado.valueOf(cambio.getValorAnterior()));
             }
 
-        } else if (cambio.getAtributo().equals("bloqueada")) {
-            String[] partes = cambio.getIdEntidad().split("-");
-            if (partes.length == 2) {
-                boolean valorAnterior = Boolean.parseBoolean(cambio.getValorAnterior());
-                if (valorAnterior) {
-                    grafoVial.bloquearCalle(partes[0], partes[1]);
-                } else {
-                    grafoVial.desbloquearCalle(partes[0], partes[1]);
-                }
-            }
-
         } else if (cambio.getAtributo().equals("bloqueadaNombre")) {
             boolean valorAnterior = Boolean.parseBoolean(cambio.getValorAnterior());
             if (valorAnterior) {
                 grafoVial.bloquearCallePorNombre(cambio.getIdEntidad());
             } else {
                 grafoVial.desbloquearCallePorNombre(cambio.getIdEntidad());
+            }
+
+        } else if (cambio.getAtributo().equals("bloqueadaTramo")) {
+            String[] partes = cambio.getIdEntidad().split("-");
+            if (partes.length == 2) {
+                boolean valorAnterior = Boolean.parseBoolean(cambio.getValorAnterior());
+                if (valorAnterior) {
+                    grafoVial.bloquearTramo(partes[0], partes[1]);
+                } else {
+                    grafoVial.desbloquearTramo(partes[0], partes[1]);
+                }
             }
 
         } else if (cambio.getAtributo().equals("demora")) {
@@ -314,6 +332,10 @@ public class SistemaTrafico {
         historialCambios.mostrar();
     }
 
+    public Nodo<Cambio> obtenerHistorialDesdeElTope() {
+        return historialCambios.getTope();
+    }
+
 
     // ===== TERRITORIO =====
 
@@ -321,7 +343,6 @@ public class SistemaTrafico {
     public boolean agregarZona(String nombreZona) { return arbolTerritorial.agregarZona(nombreZona); }
     public boolean agregarBarrio(String z, String b) { return arbolTerritorial.agregarBarrio(z, b); }
     public boolean agregarManzana(String b, String m) { return arbolTerritorial.agregarManzana(b, m); }
-    public void incrementarIncidentesEn(String nombre) { arbolTerritorial.incrementarIncidentes(nombre); }
     public void mostrarTerritorio() {
         arbolTerritorial.mostrar();
         System.out.println();

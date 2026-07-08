@@ -1,6 +1,6 @@
 package modelo;
 
-public class    Emergencia {
+public class Emergencia {
 
     private String id;
     private int gravedad; // 1 a 5. 5 es la más grave.
@@ -9,19 +9,12 @@ public class    Emergencia {
     private String descripcion;
     private String zona;
 
-    // Constructor original que ya tenías — NO lo toques
-    public Emergencia(String id, int gravedad, String interseccionId, String descripcion) {
+    public Emergencia(String id, int gravedad, String interseccionId, String descripcion, String zona) {
         this.id = id;
         this.gravedad = gravedad;
         this.interseccionId = interseccionId;
         this.descripcion = descripcion;
         this.timestamp = System.currentTimeMillis();
-        this.zona = "Sin zona";  // solo agregá esta línea acá
-    }
-
-    // Constructor nuevo con zona
-    public Emergencia(String id, int gravedad, String interseccionId, String descripcion, String zona) {
-        this(id, gravedad, interseccionId, descripcion);
         this.zona = zona;
     }
 
@@ -48,18 +41,6 @@ public class    Emergencia {
 
     public String getDescripcion() {
         return descripcion;
-    }
-
-    public void setGravedad(int gravedad) {
-        this.gravedad = gravedad;
-    }
-
-    public void setInterseccionId(String interseccionId) {
-        this.interseccionId = interseccionId;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
     }
 
     @Override

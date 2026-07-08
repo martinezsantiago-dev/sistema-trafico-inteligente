@@ -16,10 +16,6 @@ public class Cambio {
         this.valorNuevo = valorNuevo;
     }
 
-    public String getEntidad() {
-        return entidad;
-    }
-
     public String getIdEntidad() {
         return idEntidad;
     }

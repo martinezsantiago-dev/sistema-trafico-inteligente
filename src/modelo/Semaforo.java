@@ -29,37 +29,11 @@ public class Semaforo extends Dispositivo {
         this.estado = estado;
     }
 
-    public int getTiempoVerde() {
-        return tiempoVerde;
-    }
-
-    public void setTiempoVerde(int tiempoVerde) {
-        this.tiempoVerde = tiempoVerde;
-    }
-
-    public int getTiempoAmarillo() {
-        return tiempoAmarillo;
-    }
-
-    public void setTiempoAmarillo(int tiempoAmarillo) {
-        this.tiempoAmarillo = tiempoAmarillo;
-    }
-
-    public int getTiempoRojo() {
-        return tiempoRojo;
-    }
-
-    public void setTiempoRojo(int tiempoRojo) {
-        this.tiempoRojo = tiempoRojo;
-    }
-
-
-
-
     @Override
     public String toString() {
         return "[Semáforo " + getId() + "]" +
-                " Estado: " + estado +
+                " Ubicación: " + getUbicacion() +
+                " | Estado: " + estado +
                 " | Verde: " + tiempoVerde + "s" +
                 " | Amarillo: " + tiempoAmarillo + "s" +
                 " | Rojo: " + tiempoRojo + "s" +

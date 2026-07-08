@@ -22,18 +22,10 @@ public class Dispositivo {
         return interseccion;
     }
 
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public Direccion getUbicacion() {
         return ubicacion;
     }
 
-    public void setUbicacion(Direccion ubicacion) {
-        this.ubicacion = ubicacion;
-    }
 
     public boolean isActivo() {
         return activo;
@@ -41,10 +33,6 @@ public class Dispositivo {
 
     public void setActivo(boolean activo) {
         this.activo = activo;
-    }
-
-    public void setInterseccion(String interseccion) {
-        this.interseccion = interseccion;
     }
 
     @Override
