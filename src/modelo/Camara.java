@@ -12,8 +12,18 @@ public class Camara extends Dispositivo {
 
     @Override
     public String toString() {
+        return "[Cámara " + getId() + "]" + detalle();
+    }
+
+    @Override
+    public String toString(String nombreInterseccion) {
         return "[Cámara " + getId() + "]" +
-                " Ubicación: " + getUbicacion() +
+                " Intersección: " + getInterseccion() + " (" + nombreInterseccion + ") |" +
+                detalle();
+    }
+
+    private String detalle() {
+        return " Ubicación: " + getUbicacion() +
                 " | Tipo: " + tipo +
                 " | " + (isActivo() ? "ACTIVA" : "INACTIVA");
     }

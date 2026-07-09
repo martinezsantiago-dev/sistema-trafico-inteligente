@@ -172,6 +172,18 @@ public class DiccionarioDispositivos implements IDiccionarioDispositivos {
     }
 
 
+    public ListaEnlazada<Dispositivo> obtenerTodos() {
+        ListaEnlazada<Dispositivo> todos = new ListaEnlazada<>();
+        for (int i = 0; i < capacidad; i++) {
+            EntradaDiccionario actual = tabla[i];
+            while (actual != null) {
+                todos.insertarFinal(actual.valor);
+                actual = actual.siguiente;
+            }
+        }
+        return todos;
+    }
+
     public boolean estaVacio() {
         return cantidad == 0;
     }

@@ -83,6 +83,8 @@ public class Main {
         String nombreCalle = seleccionarCalle();
         if (nombreCalle == null) return;
 
+
+
         ListaEnlazada<Calle> tramos = sistema.obtenerTramosDeCalle(nombreCalle);
         if (tramos.estaVacia()) {
             System.out.println("No se encontraron tramos para esa calle.");
@@ -105,7 +107,6 @@ public class Main {
             System.out.println("2. Gestionar calles");
             System.out.println("3. Gestionar emergencias");
             System.out.println("4. Ver y deshacer cambios");
-            System.out.println("5. Liberar vehículo de intersección");
             System.out.println("0. Volver");
             System.out.print("Seleccione: ");
             opcion = leerEntero();
@@ -115,7 +116,6 @@ public class Main {
                 case 2: menuCalles(); break;
                 case 3: menuEmergencias(); break;
                 case 4: menuCambios(); break;
-                case 5: liberarVehiculo(); break;
                 case 0: break;
                 default: System.out.println("Opción inválida.");
             }
@@ -180,6 +180,7 @@ public class Main {
             System.out.println("2. Atender próxima emergencia");
             System.out.println("3. Reportar emergencia");
             System.out.println("4. Reporte de emergencias por zona");
+            System.out.println("5. Ver/resolver emergencias en curso");
             System.out.println("0. Volver");
             System.out.print("Seleccione: ");
             opcion = leerEntero();
@@ -189,6 +190,7 @@ public class Main {
                 case 2: atenderEmergencia(); break;
                 case 3: reportarEmergencia(); break;
                 case 4: sistema.reporteEmergenciasPorZona(); break;
+                case 5: resolverEmergenciaEnCurso(); break;
                 case 0: break;
                 default: System.out.println("Opción inválida.");
             }
@@ -224,11 +226,75 @@ public class Main {
         // Obtener zona desde la intersección
         String zona = sistema.getZonaDeInterseccion(interseccionId);
 
+        String tipoIncidente = seleccionarTipoIncidente();
+        if (tipoIncidente == null) return;
+
+        boolean hayHeridos = false;
+        String tipoVehiculoRequerido = null;
+
+        if (tipoIncidente.equals("CHOQUE")) {
+            hayHeridos = leerTexto("¿Hay heridos? (s/n): ").equalsIgnoreCase("s");
+        } else if (tipoIncidente.equals("OTRO")) {
+            if (leerTexto("¿Requiere despacho de vehículo? (s/n): ").equalsIgnoreCase("s")) {
+                tipoVehiculoRequerido = seleccionarTipoVehiculo();
+                if (tipoVehiculoRequerido == null) return;
+            }
+        }
+
         int gravedad = leerGravedad();
+        if (gravedad == 0) { System.out.println("Operación cancelada."); return; }
         String descripcion = leerTexto("Descripción del incidente: ");
         String id = "E" + contadorEmergencias++;
 
-        sistema.reportarEmergencia(new Emergencia(id, gravedad, interseccionId, descripcion, zona));
+        Emergencia emergencia = new Emergencia(id, gravedad, interseccionId, descripcion, zona,
+                tipoIncidente, hayHeridos, tipoVehiculoRequerido);
+        sistema.reportarEmergencia(emergencia);
+    }
+
+    // Devuelve la constante de tipo de incidente elegida, o null si la opción fue inválida (cancela el reporte)
+    private static String seleccionarTipoIncidente() {
+        System.out.println("\nTipo de incidente:");
+        System.out.println("1. Choque");
+        System.out.println("2. Incendio");
+        System.out.println("3. Semáforo fuera de servicio");
+        System.out.println("4. Cámara fuera de servicio");
+        System.out.println("5. Calle bloqueada");
+        System.out.println("6. Otro");
+        System.out.print("Seleccione: ");
+        int opcion = leerEntero();
+
+        switch (opcion) {
+            case 1: return "CHOQUE";
+            case 2: return "INCENDIO";
+            case 3: return "SEMAFORO_ROTO";
+            case 4: return "CAMARA_ROTA";
+            case 5: return "CALLE_BLOQUEADA";
+            case 6: return "OTRO";
+            default:
+                System.out.println("Opción inválida.");
+                return null;
+        }
+    }
+
+    // Devuelve el tipo de vehículo elegido (para el caso "Otro"), o null si la opción fue inválida
+    private static String seleccionarTipoVehiculo() {
+        System.out.println("\n¿Qué tipo de vehículo se necesita?");
+        System.out.println("1. Ambulancia");
+        System.out.println("2. Patrulla");
+        System.out.println("3. Bomberos");
+        System.out.println("4. Técnico");
+        System.out.print("Seleccione: ");
+        int opcion = leerEntero();
+
+        switch (opcion) {
+            case 1: return "ambulancia";
+            case 2: return "patrulla";
+            case 3: return "bomberos";
+            case 4: return "tecnico";
+            default:
+                System.out.println("Opción inválida.");
+                return null;
+        }
     }
 
     private static void calcularRuta(String tipo) {
@@ -352,13 +418,18 @@ public class Main {
         String interseccionId = seleccionarInterseccion();
         if (interseccionId == null) return;
 
-        int tiempoVerde    = leerEnteroPositivo("Tiempo verde (seg): ");
-        int tiempoAmarillo = leerEnteroPositivo("Tiempo amarillo (seg): ");
-        int tiempoRojo     = leerEnteroPositivo("Tiempo rojo (seg): ");
+        Direccion ubicacion = seleccionarUbicacionEnInterseccion(interseccionId);
 
-        String id = "S" + (sistema.cantidadSemaforos() + 1);        // La dirección se genera desde la intersección, sin pedirla al usuario
+        int tiempoVerde = leerEnteroPositivo("Tiempo verde (seg)");
+        if (tiempoVerde == 0) { System.out.println("Operación cancelada."); return; }
+        int tiempoAmarillo = leerEnteroPositivo("Tiempo amarillo (seg)");
+        if (tiempoAmarillo == 0) { System.out.println("Operación cancelada."); return; }
+        int tiempoRojo = leerEnteroPositivo("Tiempo rojo (seg)");
+        if (tiempoRojo == 0) { System.out.println("Operación cancelada."); return; }
+
+        String id = "S" + (sistema.cantidadSemaforos() + 1);
         boolean resultado = sistema.registrarSemaforo(
-                new Semaforo(id, new Direccion(sistema.getNombreInterseccion(interseccionId), 0), interseccionId,
+                new Semaforo(id, ubicacion, interseccionId,
                         tiempoVerde, tiempoAmarillo, tiempoRojo));
         System.out.println(resultado
                 ? "Semáforo " + id + " registrado correctamente."
@@ -370,28 +441,62 @@ public class Main {
         String interseccionId = seleccionarInterseccion();
         if (interseccionId == null) return;
 
+        Direccion ubicacion = seleccionarUbicacionEnInterseccion(interseccionId);
+
         String tipo = "";
         while (tipo.isEmpty()) {
             System.out.println("Tipo de cámara:");
             System.out.println("  1. Velocidad");
             System.out.println("  2. Flujo");
             System.out.println("  3. Seguridad");
-            System.out.print("Seleccione (1-3): ");
+            System.out.println("  0. Cancelar");
+            System.out.print("Seleccione (0-3): ");
             int opTipo = leerEntero();
             switch (opTipo) {
                 case 1: tipo = "velocidad"; break;
                 case 2: tipo = "flujo"; break;
                 case 3: tipo = "seguridad"; break;
+                case 0: return;
                 default: System.out.println("Opción inválida.");
             }
         }
 
         String id = "C" + (sistema.cantidadCamaras() + 1);
         boolean resultado = sistema.registrarCamara(
-                new Camara(id, new Direccion(sistema.getNombreInterseccion(interseccionId), 0), interseccionId, tipo));
+                new Camara(id, ubicacion, interseccionId, tipo));
         System.out.println(resultado
                 ? "Cámara " + id + " registrada correctamente."
                 : "Error al registrar la cámara.");
+    }
+
+    // La altura no se le pide al operador: se toma la altura de origen de la calle elegida,
+    // que ya representa la altura real de esa calle justo en esta intersección.
+    private static Direccion seleccionarUbicacionEnInterseccion(String interseccionId) {
+        ListaEnlazada<Calle> calles = sistema.getCallesAdyacentes(interseccionId);
+        if (calles.estaVacia()) {
+            return new Direccion(sistema.getNombreInterseccion(interseccionId), null); // es un caso borde. solo pondra altura null si no tengo cargada ninguna calle en una interseccion, cosa q no pasa con nuestro ejemplo.
+        }
+
+        System.out.println("\n¿Sobre qué calle está el dispositivo?");
+        int numero = 1;
+        Nodo<Calle> aux = calles.getCabeza();
+        while (aux != null) {
+            System.out.println("  " + numero + ". " + aux.dato.getNombre() + " (altura " + aux.dato.getAlturaOrigen() + ")");
+            numero++;
+            aux = aux.siguiente;
+        }
+
+        int eleccion = -1;
+        while (eleccion < 1 || eleccion > calles.tamanio()) {
+            System.out.print("Seleccione (1-" + calles.tamanio() + "): ");
+            eleccion = leerEntero();
+            if (eleccion < 1 || eleccion > calles.tamanio())
+                System.out.println("Opción inválida.");
+        }
+
+        Nodo<Calle> nodo = calles.getCabeza();
+        for (int i = 1; i < eleccion; i++) nodo = nodo.siguiente;
+        return new Direccion(nodo.dato.getNombre(), nodo.dato.getAlturaOrigen());
     }
 
     private static void gestionarBloqueo(boolean bloquear) {
@@ -655,8 +760,10 @@ public class Main {
                 System.out.println("El tramo " + etiqueta + " no tiene demora activa.");
                 return;
             }
-            sistema.registrarDemoraEnCalle(origenId, destinoId, 0);
-            System.out.println("Demora cancelada en " + etiqueta + ".");
+            boolean resultado = sistema.registrarDemoraEnCalle(origenId, destinoId, 0);
+            System.out.println(resultado
+                    ? "Demora cancelada en " + etiqueta + "."
+                    : "No se pudo cancelar la demora en " + etiqueta + ".");
         } else {
             boolean resultado = sistema.registrarDemoraEnCalle(origenId, destinoId, minutos);
             System.out.println(resultado
@@ -674,8 +781,71 @@ public class Main {
         }
 
         String confirmar = leerTexto("¿Atender la más prioritaria? (s/n): ");
-        if (confirmar.equalsIgnoreCase("s")) sistema.atenderEmergencia();
-        else System.out.println("Operación cancelada.");
+        if (!confirmar.equalsIgnoreCase("s")) {
+            System.out.println("Operación cancelada.");
+            return;
+        }
+
+        // Puede devolver null si no hay vehículos disponibles del tipo que corresponde;
+        // en ese caso la emergencia queda pendiente en la cola, no se pierde.
+        Emergencia atendida = sistema.atenderEmergencia();
+
+        if (atendida == null) {
+            if (sistema.hayEmergencias()) {
+                String forzar = leerTexto("¿Desea marcarla como atendida igual, sin despachar vehículo? (s/n): ");
+                if (forzar.equalsIgnoreCase("s")) {
+                    atendida = sistema.forzarAtencionSinVehiculo();
+                }
+            }
+            if (atendida == null) return;
+        }
+
+        if (atendida.getPatenteVehiculoDespachado() == null) {
+            System.out.println("Emergencia " + atendida.getId() + " marcada como atendida sin despacho de vehículo.");
+            return;
+        }
+
+        String resuelto = leerTexto("¿Se resolvió la emergencia en el lugar? (s/n): ");
+        if (resuelto.equalsIgnoreCase("s")) {
+            sistema.resolverEmergencia(atendida);
+        } else {
+            System.out.println("El vehículo " + atendida.getTipoVehiculoDespachado()
+                    + " (" + atendida.getPatenteVehiculoDespachado() + ") sigue ocupado en el lugar."
+                    + " Podés resolverla más tarde desde 'Ver/resolver emergencias en curso'.");
+        }
+    }
+
+    // Muestra las emergencias que ya despacharon un vehículo pero siguen sin resolverse,
+    // y permite cerrar una de ellas (libera el vehículo asociado).
+    private static void resolverEmergenciaEnCurso() {
+        if (!sistema.hayEmergenciasEnCurso()) {
+            System.out.println("\nNo hay emergencias en curso.");
+            return;
+        }
+
+        System.out.println("\nEmergencias en curso:");
+        ListaEnlazada<Emergencia> enCurso = sistema.getEmergenciasEnCurso();
+        int numero = 1;
+        Nodo<Emergencia> aux = enCurso.getCabeza();
+        while (aux != null) {
+            System.out.println("  " + numero + ". " + aux.dato);
+            numero++;
+            aux = aux.siguiente;
+        }
+        System.out.println("  0. Cancelar");
+
+        int eleccion = -1;
+        while (eleccion < 0 || eleccion > enCurso.tamanio()) {
+            System.out.print("¿Cuál desea marcar como resuelta? (0-" + enCurso.tamanio() + "): ");
+            eleccion = leerEntero();
+            if (eleccion < 0 || eleccion > enCurso.tamanio())
+                System.out.println("Opción inválida.");
+        }
+        if (eleccion == 0) return;
+
+        Nodo<Emergencia> nodo = enCurso.getCabeza();
+        for (int i = 1; i < eleccion; i++) nodo = nodo.siguiente;
+        sistema.resolverEmergencia(nodo.dato);
     }
 
     // ===== DATOS INICIALES =====
@@ -762,6 +932,14 @@ public class Main {
                 new Direccion("Corrientes",1000), "I6", "seguridad"));
 
         sistema.registrarVehiculoCiudadano("ABC123", "Auto");
+
+        // ===== VEHÍCULOS DE EMERGENCIA =====
+        sistema.registrarVehiculoEnInterseccion("I1", new Vehiculo("AMB-01", "ambulancia", null));
+        sistema.registrarVehiculoEnInterseccion("I4", new Vehiculo("PAT-01", "patrulla", null));
+        sistema.registrarVehiculoEnInterseccion("I4", new Vehiculo("PAT-02", "patrulla", null)); // dos patrullas en I4, para demostrar el orden FIFO
+        sistema.registrarVehiculoEnInterseccion("I6", new Vehiculo("BOM-01", "bomberos", null));
+        sistema.registrarVehiculoEnInterseccion("I3", new Vehiculo("TEC-01", "tecnico", null));
+
         System.out.println("Sistema iniciado.");
         System.out.println();
         System.out.println("Mapa cargado:");
@@ -794,22 +972,24 @@ public class Main {
         return texto;
     }
 
+    // Devuelve 0 si el usuario quiere cancelar la operación (0 nunca es un valor válido para lo que se usa esto).
     private static int leerEnteroPositivo(String mensaje) {
-        int valor = 0;
-        while (valor <= 0) {
-            System.out.print(mensaje);
+        int valor = -1;
+        while (valor < 0) {
+            System.out.print(mensaje + " (0 para cancelar): ");
             valor = leerEntero();
-            if (valor <= 0) System.out.println("Ingrese un número mayor a 0.");
+            if (valor < 0) System.out.println("Ingrese un número mayor a 0, o 0 para cancelar.");
         }
         return valor;
     }
 
+    // Devuelve 0 si el usuario quiere cancelar la operación (0 está fuera del rango válido 1-5).
     private static int leerGravedad() {
-        int gravedad = 0;
-        while (gravedad < 1 || gravedad > 5) {
-            System.out.print("Gravedad (1-5): ");
+        int gravedad = -1;
+        while (gravedad < 0 || gravedad > 5) {
+            System.out.print("Gravedad (1-5, 0 para cancelar): ");
             gravedad = leerEntero();
-            if (gravedad < 1 || gravedad > 5) System.out.println("La gravedad debe ser entre 1 y 5.");
+            if (gravedad < 0 || gravedad > 5) System.out.println("La gravedad debe ser entre 1 y 5, o 0 para cancelar.");
         }
         return gravedad;
     }
@@ -891,13 +1071,5 @@ public class Main {
         return new String[] { sistema.getNombreInterseccion(partes[0]), sistema.getNombreInterseccion(partes[1]) };
     }
 
-    private static void liberarVehiculo() {
-        System.out.println("\n¿De qué intersección liberar vehículo?");
-        String id = seleccionarInterseccion();
-        if (id == null) return;
-        Vehiculo v = sistema.liberarVehiculoDeInterseccion(id);
-        if (v == null) System.out.println("No hay vehículos esperando.");
-        else System.out.println("Vehículo liberado: " + v);
-    }
 
 }

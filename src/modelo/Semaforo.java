@@ -31,8 +31,18 @@ public class Semaforo extends Dispositivo {
 
     @Override
     public String toString() {
+        return "[Semáforo " + getId() + "]" + detalle();
+    }
+
+    @Override
+    public String toString(String nombreInterseccion) {
         return "[Semáforo " + getId() + "]" +
-                " Ubicación: " + getUbicacion() +
+                " Intersección: " + getInterseccion() + " (" + nombreInterseccion + ") |" +
+                detalle();
+    }
+
+    private String detalle() {
+        return " Ubicación: " + getUbicacion() +
                 " | Estado: " + estado +
                 " | Verde: " + tiempoVerde + "s" +
                 " | Amarillo: " + tiempoAmarillo + "s" +

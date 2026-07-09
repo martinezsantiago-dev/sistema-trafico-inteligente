@@ -94,8 +94,9 @@ public class GrafoVial implements IGrafoVial {
     public boolean registrarDemoraEnCalle(String origenId, String destinoId, int demoraExtraMinutos) {
         Calle calle = buscarCalle(origenId, destinoId);
         if (calle == null || demoraExtraMinutos < 0) return false;
+        if (calle.isBloqueada() && demoraExtraMinutos > 0) return false;
         if (demoraExtraMinutos == 0 && calle.getDemoraExtraMinutos() == 0) {
-            return false; // ← no hay demora que cancelar
+            return false;
         }
         calle.setDemoraExtraMinutos(demoraExtraMinutos);
         return true;
@@ -107,8 +108,15 @@ public class GrafoVial implements IGrafoVial {
         return calle.getDemoraExtraMinutos();
     }
 
-    private long minutosDesde(long timestamp) {
-        return (System.currentTimeMillis() - timestamp) / 60000;
+    private String tiempoTranscurridoDesde(long timestamp) {
+        long segundos = (System.currentTimeMillis() - timestamp) / 1000;
+        if (segundos < 60) return segundos + " seg";
+        long minutos = segundos / 60;
+        if (minutos < 60) return minutos + " min";
+        long horas = minutos / 60;
+        if (horas < 24) return horas + " h";
+        long dias = horas / 24;
+        return dias + " d";
     }
 
     public void mostrarCallesConDemora() {
@@ -121,7 +129,7 @@ public class GrafoVial implements IGrafoVial {
                     System.out.println("  " + auxC.dato.getNombre() +
                             " (" + auxC.dato.getOrigenId() + "→" + auxC.dato.getDestinoId() + ")" +
                             " | Demora: +" + auxC.dato.getDemoraExtraMinutos() + " min" +
-                            " | Reportada hace " + minutosDesde(auxC.dato.getTimestampDemora()) + " min");
+                            " | Reportada hace " + tiempoTranscurridoDesde(auxC.dato.getTimestampDemora()));
                     hayDemoras = true;
                 }
                 auxC = auxC.siguiente;
@@ -144,6 +152,70 @@ public class GrafoVial implements IGrafoVial {
         Interseccion interseccion = buscarInterseccion(interseccionId);
         if (interseccion == null) return null;
         return interseccion.liberarVehiculo();
+    }
+
+    public Vehiculo liberarVehiculoDeTipoEnInterseccion(String interseccionId, String tipo) {
+        Interseccion interseccion = buscarInterseccion(interseccionId);
+        if (interseccion == null) return null;
+        return interseccion.liberarVehiculoDeTipo(tipo);
+    }
+
+    public boolean marcarVehiculoDisponible(String interseccionId, String patente) {
+        Interseccion interseccion = buscarInterseccion(interseccionId);
+        if (interseccion == null) return false;
+        return interseccion.marcarVehiculoDisponible(patente);
+    }
+
+    // Dijkstra en sentido INVERSO: para cada intersección asentada, el costo representa
+    // "tiempo desde esa intersección hasta interseccionEmergenciaId" (no al revés), porque
+    // relajamos mirando quién tiene una calle que LLEGA al nodo recién asentado, no que sale de él.
+    // Corta apenas asienta la primera intersección con un vehículo disponible del tipo pedido.
+    public String buscarVehiculoDisponiblePorTipo(String interseccionEmergenciaId, String tipo) {
+        int cantidad = intersecciones.tamanio();
+        if (cantidad == 0) return null;
+
+        String[] ids = cargarIds();
+        int indiceEmergencia = obtenerIndice(ids, interseccionEmergenciaId);
+        if (indiceEmergencia == -1) return null;
+
+        int[] costos = new int[cantidad];
+        boolean[] visitados = new boolean[cantidad];
+        for (int i = 0; i < cantidad; i++) {
+            costos[i] = SIN_RUTA;
+            visitados[i] = false;
+        }
+        costos[indiceEmergencia] = 0;
+
+        for (int i = 0; i < cantidad; i++) {
+            int actualIndice = indiceMenorCosto(costos, visitados);
+            if (actualIndice == -1) break;
+
+            visitados[actualIndice] = true;
+            Interseccion actual = buscarInterseccion(ids[actualIndice]);
+            if (actual != null && actual.tieneVehiculoDisponibleDeTipo(tipo)) {
+                return ids[actualIndice];
+            }
+
+            // Relajación inversa: busco, entre todas las intersecciones no asentadas,
+            // cuáles tienen una calle que llega directamente a "actual".
+            Nodo<Interseccion> auxCand = intersecciones.getCabeza();
+            while (auxCand != null) {
+                Interseccion candidata = auxCand.dato;
+                int indiceCandidata = obtenerIndice(ids, candidata.getId());
+                if (indiceCandidata != -1 && !visitados[indiceCandidata]) {
+                    Calle calle = buscarCalle(candidata.getId(), ids[actualIndice]);
+                    if (calle != null && !calle.isBloqueada()) {
+                        int peso = calle.getTiempoTotalMinutos();
+                        if (costos[actualIndice] + peso < costos[indiceCandidata]) {
+                            costos[indiceCandidata] = costos[actualIndice] + peso;
+                        }
+                    }
+                }
+                auxCand = auxCand.siguiente;
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -194,9 +266,14 @@ public class GrafoVial implements IGrafoVial {
         }
         return nombresVistos;
     }
-
+    // Nuevo
     // Un tramo por cada objeto Calle físico: si es doble mano, I1->I2 e I2->I1
     // son el mismo tramo y se devuelve una sola vez (la primera arista encontrada).
+    public ListaEnlazada<Calle> getCallesAdyacentes(String interseccionId) {
+        Interseccion interseccion = buscarInterseccion(interseccionId);
+        return interseccion != null ? interseccion.getCallesAdyacentes() : new ListaEnlazada<>();
+    }
+
     public ListaEnlazada<Calle> obtenerTramosDeCalle(String nombreCalle) {
         ListaEnlazada<Calle> tramos = new ListaEnlazada<>();
         Nodo<Interseccion> auxI = intersecciones.getCabeza();
@@ -232,7 +309,7 @@ public class GrafoVial implements IGrafoVial {
     public boolean existeTramoInverso(String origenId, String destinoId) {
         return buscarCalle(destinoId, origenId) != null;
     }
-
+    // Nuevo
     public boolean isTramoBloqueado(String origenId, String destinoId) {
         Calle calle = buscarCalle(origenId, destinoId);
         return calle != null && calle.isBloqueada();

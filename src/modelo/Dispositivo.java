@@ -39,4 +39,10 @@ public class Dispositivo {
     public String toString() {
         return "ID: " + id + " | Activo: " + activo;
     }
+
+    // Variante para listados: arma la línea con el nombre de la intersección ya resuelto
+    // (Dispositivo no conoce el grafo vial, por eso el nombre se lo pasan armado).
+    public String toString(String nombreInterseccion) {
+        return toString();
+    }
 }

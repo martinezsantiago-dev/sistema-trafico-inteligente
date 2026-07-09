@@ -46,6 +46,11 @@ public class ColaFIFO<T> implements IColaFIFO<T> {
         return datoEliminado;
     }
 
+    // Acceso de solo lectura al nodo frente, para recorrer la cola sin desencolar
+    public Nodo<T> getFrente() {
+        return frente;
+    }
+
     @Override
     public T frente() {
         if (estaVacia()) {

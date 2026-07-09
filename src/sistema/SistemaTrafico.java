@@ -11,6 +11,8 @@ public class SistemaTrafico {
     private ArbolTerritorial arbolTerritorial;
     private ColaPrioridadEmergencias colaEmergencias;
     private PilaHistorial<Cambio> historialCambios;
+    // Emergencias que ya despacharon un vehículo pero el operador todavía no confirmó que se resolvieron.
+    private ListaEnlazada<Emergencia> emergenciasEnCurso;
 
     // Seguimiento de posición del ciudadano
     private String interseccionActualCiudadano;
@@ -22,12 +24,9 @@ public class SistemaTrafico {
         this.arbolTerritorial = new ArbolTerritorial();
         this.colaEmergencias = new ColaPrioridadEmergencias();
         this.historialCambios = new PilaHistorial<>();
+        this.emergenciasEnCurso = new ListaEnlazada<>();
         this.interseccionActualCiudadano = null;
         this.vehiculoCiudadano = null;
-    }
-
-    public Vehiculo liberarVehiculoDeInterseccion(String id) {
-        return grafoVial.liberarVehiculoEnInterseccion(id);
     }
 
     // ===== DISPOSITIVOS =====
@@ -73,7 +72,21 @@ public class SistemaTrafico {
     }
 
     public void mostrarDispositivos() {
-        dispositivos.mostrar();
+        ListaEnlazada<Dispositivo> todos = dispositivos.obtenerTodos();
+        if (todos.estaVacia()) {
+            System.out.println("No hay dispositivos registrados.");
+            return;
+        }
+
+        System.out.println("Dispositivos registrados (" + todos.tamanio() + "):");
+        System.out.println("─────────────────────────────────────────");
+        Nodo<Dispositivo> aux = todos.getCabeza();
+        while (aux != null) {
+            Dispositivo d = aux.dato;
+            System.out.println(d.toString(getNombreInterseccion(d.getInterseccion())));
+            aux = aux.siguiente;
+        }
+        System.out.println("─────────────────────────────────────────");
     }
 
     // ===== RED VIAL =====
@@ -156,6 +169,10 @@ public class SistemaTrafico {
         return grafoVial.obtenerTramosDeCalle(nombreCalle);
     }
 
+    public ListaEnlazada<Calle> getCallesAdyacentes(String interseccionId) {
+        return grafoVial.getCallesAdyacentes(interseccionId);
+    }
+
     public boolean esTramoDobleMano(String origenId, String destinoId) {
         return grafoVial.existeTramoInverso(origenId, destinoId);
     }
@@ -199,6 +216,10 @@ public class SistemaTrafico {
         System.out.println("Vehículo registrado: " + patente + " (" + tipo + ")");
     }
 
+    public boolean registrarVehiculoEnInterseccion(String interseccionId, Vehiculo vehiculo) {
+        return grafoVial.registrarVehiculoEnInterseccion(interseccionId, vehiculo);
+    }
+
     public String getInterseccionActualCiudadano() {
         return interseccionActualCiudadano;
     }
@@ -227,16 +248,119 @@ public class SistemaTrafico {
         System.out.println("Emergencia registrada: " + emergencia);
     }
 
+    // Devuelve el tipo de vehículo que corresponde según el incidente, o null si no requiere despacho
+    public String determinarTipoVehiculo(Emergencia emergencia) {
+        String tipoIncidente = emergencia.getTipoIncidente();
+        if (tipoIncidente == null) return null;
+
+        switch (tipoIncidente) {
+            case "CHOQUE": return emergencia.isHayHeridos() ? "ambulancia" : "patrulla";
+            case "INCENDIO": return "bomberos";
+            case "SEMAFORO_ROTO": return "tecnico";
+            case "CAMARA_ROTA": return "tecnico";
+            case "CALLE_BLOQUEADA": return "patrulla";
+            case "OTRO": return emergencia.getTipoVehiculoRequerido();
+            default: return null;
+        }
+    }
+
+    // Solo hace el despacho en sí (asume que ya se confirmó que hay un vehículo disponible).
+    private void despacharVehiculoSegunEmergencia(Emergencia emergencia, String tipoVehiculo) {
+        String interseccionEmergenciaId = emergencia.getInterseccionId();
+        String interseccionVehiculoId = grafoVial.buscarVehiculoDisponiblePorTipo(interseccionEmergenciaId, tipoVehiculo);
+        Vehiculo vehiculo = grafoVial.liberarVehiculoDeTipoEnInterseccion(interseccionVehiculoId, tipoVehiculo);
+
+        System.out.println("Despachando " + tipoVehiculo + " (" + vehiculo.getPatente() + ") desde "
+                + interseccionVehiculoId + " (" + getNombreInterseccion(interseccionVehiculoId) + ")"
+                + " hacia la emergencia en "
+                + interseccionEmergenciaId + " (" + getNombreInterseccion(interseccionEmergenciaId) + ")");
+
+        calcularRutaMasRapida(interseccionVehiculoId, interseccionEmergenciaId);
+
+        // El vehículo queda físicamente en la intersección de la emergencia, marcado ocupado
+        // (no vuelve a aparecer como disponible hasta que se resuelva esa emergencia).
+        vehiculo.setInterseccionActual(interseccionEmergenciaId);
+        vehiculo.setOcupado(true);
+        grafoVial.registrarVehiculoEnInterseccion(interseccionEmergenciaId, vehiculo);
+        emergencia.registrarVehiculoDespachado(tipoVehiculo, vehiculo.getPatente());
+        emergenciasEnCurso.insertarFinal(emergencia);
+    }
+
     public boolean hayEmergencias() {
         return !colaEmergencias.estaVacia();
     }
 
-
+    // Saca la emergencia más urgente de la cola de prioridad y despacha el vehículo correspondiente,
+    // pero solo si hay uno disponible: si no lo hay, la emergencia NO se saca de la cola (sigue pendiente),
+    // para no perderla silenciosamente. El llamador puede optar por forzarAtencionSinVehiculo() en ese caso.
     public Emergencia atenderEmergencia() {
-        Emergencia e = colaEmergencias.atender();
-        if (e == null) System.out.println("No hay emergencias pendientes.");
-        else System.out.println("Atendiendo: " + e);
+        Emergencia e = colaEmergencias.frente();
+        if (e == null) {
+            System.out.println("No hay emergencias pendientes.");
+            return null;
+        }
+
+        String tipoVehiculo = determinarTipoVehiculo(e);
+        if (tipoVehiculo != null && grafoVial.buscarVehiculoDisponiblePorTipo(e.getInterseccionId(), tipoVehiculo) == null) {
+            System.out.println("No hay vehículos de tipo '" + tipoVehiculo + "' disponibles en este momento. "
+                    + "La emergencia sigue pendiente en la cola.");
+            return null;
+        }
+
+        colaEmergencias.atender();
+        System.out.println("Atendiendo: " + e);
+        if (tipoVehiculo != null) {
+            despacharVehiculoSegunEmergencia(e, tipoVehiculo);
+        }
         return e;
+    }
+
+    // Saca la emergencia de la cola sin despachar ningún vehículo (para cuando el operador decide
+    // cerrarla igual aunque no haya vehículos disponibles, ej. se resolvió sola o por otro medio).
+    public Emergencia forzarAtencionSinVehiculo() {
+        Emergencia e = colaEmergencias.atender();
+        if (e == null) return null;
+        System.out.println("Atendiendo (sin vehículo despachado): " + e);
+        return e;
+    }
+
+    public boolean hayEmergenciasEnCurso() {
+        return !emergenciasEnCurso.estaVacia();
+    }
+
+    public void mostrarEmergenciasEnCurso() {
+        if (emergenciasEnCurso.estaVacia()) {
+            System.out.println("No hay emergencias en curso.");
+            return;
+        }
+        Nodo<Emergencia> aux = emergenciasEnCurso.getCabeza();
+        while (aux != null) {
+            System.out.println(aux.dato);
+            aux = aux.siguiente;
+        }
+    }
+
+    public ListaEnlazada<Emergencia> getEmergenciasEnCurso() {
+        return emergenciasEnCurso;
+    }
+
+    // Libera al vehículo que atendió esta emergencia: queda disponible para el próximo despacho,
+    // y la emergencia deja de figurar como "en curso".
+    public boolean resolverEmergencia(Emergencia emergencia) {
+        emergenciasEnCurso.eliminar(emergencia);
+
+        String patente = emergencia.getPatenteVehiculoDespachado();
+        if (patente == null) return true;
+
+        boolean encontrado = grafoVial.marcarVehiculoDisponible(emergencia.getInterseccionId(), patente);
+        if (encontrado) {
+            System.out.println("Vehículo " + emergencia.getTipoVehiculoDespachado() + " (" + patente
+                    + ") liberado: terminó su tarea en la emergencia y quedó disponible de nuevo.");
+        } else {
+            System.out.println("No se encontró el vehículo " + patente + " en "
+                    + emergencia.getInterseccionId() + " para liberarlo.");
+        }
+        return encontrado;
     }
 
     public String getZonaDeInterseccion(String id) {
@@ -276,48 +400,44 @@ public class SistemaTrafico {
     public boolean deshacerUltimoCambio() {
         Cambio cambio = historialCambios.desapilar();
         if (cambio == null) return false;
-        revertirCambio(cambio);
-        return true;
+        return revertirCambio(cambio);
     }
 
-    private void revertirCambio(Cambio cambio) {
+    // Devuelve si el revertido realmente tuvo efecto (ej. puede fallar si, entre el cambio original
+    // y el deshacer, el tramo se bloqueó y ya no admite la demora anterior).
+    private boolean revertirCambio(Cambio cambio) {
         if (cambio.getAtributo().equals("activo")) {
-            dispositivos.modificarActivo(cambio.getIdEntidad(),
+            return dispositivos.modificarActivo(cambio.getIdEntidad(),
                     Boolean.parseBoolean(cambio.getValorAnterior()));
 
         } else if (cambio.getAtributo().equals("estado")) {
             Dispositivo d = dispositivos.obtener(cambio.getIdEntidad());
-            if (d instanceof Semaforo) {  // instanceof sirve para comprobar si un objeto es una instancia de una clase específica o de una de sus subclases
-                ((Semaforo) d).setEstado(
-                        Semaforo.Estado.valueOf(cambio.getValorAnterior()));
-            }
+            if (!(d instanceof Semaforo)) return false;  // instanceof sirve para comprobar si un objeto es una instancia de una clase específica o de una de sus subclases
+            ((Semaforo) d).setEstado(
+                    Semaforo.Estado.valueOf(cambio.getValorAnterior()));
+            return true;
 
         } else if (cambio.getAtributo().equals("bloqueadaNombre")) {
             boolean valorAnterior = Boolean.parseBoolean(cambio.getValorAnterior());
-            if (valorAnterior) {
-                grafoVial.bloquearCallePorNombre(cambio.getIdEntidad());
-            } else {
-                grafoVial.desbloquearCallePorNombre(cambio.getIdEntidad());
-            }
+            return valorAnterior
+                    ? grafoVial.bloquearCallePorNombre(cambio.getIdEntidad())
+                    : grafoVial.desbloquearCallePorNombre(cambio.getIdEntidad());
 
         } else if (cambio.getAtributo().equals("bloqueadaTramo")) {
             String[] partes = cambio.getIdEntidad().split("-");
-            if (partes.length == 2) {
-                boolean valorAnterior = Boolean.parseBoolean(cambio.getValorAnterior());
-                if (valorAnterior) {
-                    grafoVial.bloquearTramo(partes[0], partes[1]);
-                } else {
-                    grafoVial.desbloquearTramo(partes[0], partes[1]);
-                }
-            }
+            if (partes.length != 2) return false;
+            boolean valorAnterior = Boolean.parseBoolean(cambio.getValorAnterior());
+            return valorAnterior
+                    ? grafoVial.bloquearTramo(partes[0], partes[1])
+                    : grafoVial.desbloquearTramo(partes[0], partes[1]);
 
         } else if (cambio.getAtributo().equals("demora")) {
             String[] partes = cambio.getIdEntidad().split("-");
-            if (partes.length == 2) {
-                grafoVial.registrarDemoraEnCalle(partes[0], partes[1],
-                        Integer.parseInt(cambio.getValorAnterior()));
-            }
+            if (partes.length != 2) return false;
+            return grafoVial.registrarDemoraEnCalle(partes[0], partes[1],
+                    Integer.parseInt(cambio.getValorAnterior()));
         }
+        return false;
     }
 
     public int getDemoraEnCalle(String origenId, String destinoId) {
